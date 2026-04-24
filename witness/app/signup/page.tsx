@@ -6,7 +6,7 @@ import Link from "next/link";
 type Role = "Customer" | "Creator";
 
 export default function SignupPage() {
-  const [name, setName] = useState("");
+  const [screenName, setScreenName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("Creator");
@@ -34,14 +34,18 @@ export default function SignupPage() {
 
           <form onSubmit={onSubmit} className="mt-6 grid gap-4">
             <label className="grid gap-2">
-              <span className="text-sm font-semibold text-emerald-300">Full name</span>
+              <span className="text-sm font-semibold text-emerald-300">Screen name</span>
               <input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
+                value={screenName}
+                onChange={(e) => setScreenName(e.target.value)}
                 required
                 className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
-                placeholder="Name of Witness"
+                placeholder="How you appear on WITNESS"
+                autoComplete="nickname"
               />
+              <span className="text-xs text-zinc-500">
+                This is your public name on the site. Your legal name is collected later when you set up payouts.
+              </span>
             </label>
 
             <div className="grid gap-4 sm:grid-cols-2">
