@@ -28,6 +28,9 @@ export default function SignupPage() {
           <p className="mt-2 text-sm text-zinc-300">
             Set up your profile to submit designs, monitor royalties, and manage your creator data.
           </p>
+          <p className="mt-2 text-sm text-zinc-400">
+            Both account types can buy products. Creator accounts include submission and royalty tools.
+          </p>
 
           <form onSubmit={onSubmit} className="mt-6 grid gap-4">
             <label className="grid gap-2">
@@ -65,6 +68,15 @@ export default function SignupPage() {
                   <option value="Creator">Creator</option>
                 </select>
               </label>
+            </div>
+
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-3 text-xs text-zinc-300">
+              <p>
+                <span className="font-semibold text-emerald-300">Customer:</span> Shop products and manage orders.
+              </p>
+              <p className="mt-1">
+                <span className="font-semibold text-emerald-300">Creator:</span> Shop products + submit designs + track royalties.
+              </p>
             </div>
 
             <label className="grid gap-2">
