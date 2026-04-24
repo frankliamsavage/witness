@@ -1,0 +1,136 @@
+"use client";
+
+import { useState } from "react";
+
+type Category = "T-Shirts" | "3D Prints";
+type AgreementType = "Royalty" | "One-Time";
+
+export default function SubmitDesignPage() {
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [category, setCategory] = useState<Category>("T-Shirts");
+  const [agreementType, setAgreementType] = useState<AgreementType>("Royalty");
+  const [royaltyPercent, setRoyaltyPercent] = useState("10");
+  const [imageName, setImageName] = useState("");
+  const [submitted, setSubmitted] = useState(false);
+
+  const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    setImageName(file?.name ?? "");
+  };
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
+  return (
+    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+      <main className="mx-auto flex w-full max-w-4xl flex-col gap-8 px-6 py-16 sm:px-10 lg:px-16">
+        <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-8 shadow-2xl shadow-emerald-500/10 sm:p-12">
+          <p className="mb-4 inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
+            Creator Submission
+          </p>
+          <h1 className="text-3xl font-bold leading-tight text-zinc-50 sm:text-4xl">Submit Your Design</h1>
+          <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-300 sm:text-lg">
+            Share your artwork or product idea for review. Submissions start as pending and move through moderation: pending, approved, or rejected.
+          </p>
+        </section>
+
+        <form onSubmit={onSubmit} className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
+          <div className="grid gap-5">
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-emerald-300">Design title</span>
+              <input
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+                className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                placeholder="Ex: Transparent City Grid"
+              />
+            </label>
+
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-emerald-300">Description</span>
+              <textarea
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                required
+                rows={4}
+                className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                placeholder="Describe your concept, style, and why it fits Witness."
+              />
+            </label>
+
+            <div className="grid gap-5 sm:grid-cols-2">
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-emerald-300">Category</span>
+                <select
+                  value={category}
+                  onChange={(e) => setCategory(e.target.value as Category)}
+                  className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                >
+                  <option value="T-Shirts">T-Shirts</option>
+                  <option value="3D Prints">3D Prints</option>
+                </select>
+              </label>
+
+              <label className="grid gap-2">
+                <span className="text-sm font-semibold text-emerald-300">Agreement type</span>
+                <select
+                  value={agreementType}
+                  onChange={(e) => setAgreementType(e.target.value as AgreementType)}
+                  className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                >
+                  <option value="Royalty">Royalty</option>
+                  <option value="One-Time">One-Time</option>
+                </select>
+              </label>
+            </div>
+
+            {agreementType === "Royalty" && (
+              <label className="grid gap-2 sm:max-w-xs">
+                <span className="text-sm font-semibold text-emerald-300">Royalty percentage</span>
+                <input
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={royaltyPercent}
+                  onChange={(e) => setRoyaltyPercent(e.target.value)}
+                  className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                />
+              </label>
+            )}
+
+            <label className="grid gap-2">
+              <span className="text-sm font-semibold text-emerald-300">Image upload</span>
+              <input
+                type="file"
+                accept="image/*"
+                onChange={onFileChange}
+                className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/20 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-emerald-300"
+              />
+              {imageName && <p className="text-xs text-zinc-400">Selected file: {imageName}</p>}
+            </label>
+
+            <button
+              type="submit"
+              className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 sm:w-auto"
+            >
+              Submit Design
+            </button>
+          </div>
+        </form>
+
+        {submitted && (
+          <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+            <p className="text-sm font-semibold text-emerald-300">Submission received (mock)</p>
+            <p className="mt-1 text-sm text-zinc-200">
+              Your design has been queued with status <span className="font-semibold">pending</span>. You will see updates when moderation changes it to approved or rejected.
+            </p>
+          </section>
+        )}
+      </main>
+    </div>
+  );
+}
