@@ -40,7 +40,7 @@ export default function SignupPage() {
                 onChange={(e) => setName(e.target.value)}
                 required
                 className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
-                placeholder="Frank Savage"
+                placeholder="Name of Witness"
               />
             </label>
 
