@@ -1,69 +1,45 @@
 import Link from "next/link";
+import Image from "next/image";
 
 type Design = {
   id: number;
   name: string;
-  category: "T-Shirts" | "3D Prints" | "New Arrivals";
+  category: "T-Shirts";
   basePrice: number;
   fromPrice: number;
-  creator?: string;
-  previewLabel: string;
+  creator: string;
+  imagePath: string;
 };
 
 const filters = ["All", "T-Shirts", "3D Prints", "New Arrivals"] as const;
 
-const mockDesigns: Design[] = [
+const designs: Design[] = [
   {
     id: 1,
-    name: "Neon Witness Logo",
+    name: "Fair Prices Scale",
     category: "T-Shirts",
     basePrice: 12,
     fromPrice: 18,
-    creator: "A. Rivera",
-    previewLabel: "NEON",
+    creator: "Frank Savage",
+    imagePath: "/designs/fair-prices-scale.png",
   },
   {
     id: 2,
-    name: "Transparent Future",
+    name: "Transparent Costs",
     category: "T-Shirts",
     basePrice: 11.5,
-    fromPrice: 17,
-    creator: "KJ Studio",
-    previewLabel: "FUTURE",
+    fromPrice: 18,
+    creator: "Frank Savage",
+    imagePath: "/designs/transparent-costs.png",
   },
   {
     id: 3,
-    name: "Voxel Witness Mark",
-    category: "3D Prints",
-    basePrice: 14,
-    fromPrice: 22,
-    previewLabel: "VOXEL",
-  },
-  {
-    id: 4,
-    name: "Signal Coin Stand",
-    category: "3D Prints",
-    basePrice: 16,
-    fromPrice: 25,
-    creator: "M. Cho",
-    previewLabel: "SIGNAL",
-  },
-  {
-    id: 5,
-    name: "Open Ledger Drop",
-    category: "New Arrivals",
-    basePrice: 13,
-    fromPrice: 20,
-    creator: "Witness Lab",
-    previewLabel: "LEDGER",
-  },
-  {
-    id: 6,
-    name: "Community Pulse",
-    category: "New Arrivals",
-    basePrice: 12.5,
-    fromPrice: 19,
-    previewLabel: "PULSE",
+    name: "Witness: See Everything",
+    category: "T-Shirts",
+    basePrice: 12,
+    fromPrice: 18,
+    creator: "Frank Savage",
+    imagePath: "/designs/witness-eye.png",
   },
 ];
 
@@ -100,13 +76,20 @@ export default function ProductsPage() {
             </div>
 
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              {mockDesigns.map((design) => (
+              {designs.map((design) => (
                 <article
                   key={design.id}
                   className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-4 shadow-sm transition-colors hover:border-emerald-500/50"
                 >
-                  <div className="flex h-32 items-center justify-center rounded-xl border border-zinc-800 bg-gradient-to-br from-zinc-900 to-zinc-800 text-sm font-semibold tracking-wide text-emerald-300">
-                    {design.previewLabel}
+                  <div className="relative h-40 overflow-hidden rounded-xl border border-zinc-800 bg-zinc-950">
+                    <div className="absolute inset-x-0 top-0 h-16 bg-emerald-500/10 blur-2xl" />
+                    <Image
+                      src={design.imagePath}
+                      alt={design.name}
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 640px) 100vw, (max-width: 1280px) 50vw, 33vw"
+                    />
                   </div>
 
                   <p className="mt-3 text-xs font-medium uppercase tracking-wide text-zinc-400">{design.category}</p>
@@ -119,7 +102,7 @@ export default function ProductsPage() {
                     <p>
                       From <span className="font-semibold text-emerald-300">${design.fromPrice.toFixed(2)}</span>
                     </p>
-                    <p className="text-zinc-400">Creator: {design.creator ?? "In-house design"}</p>
+                    <p className="text-zinc-400">Creator: {design.creator}</p>
                   </div>
 
                   <button
