@@ -1,0 +1,861 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum VideoStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  username  String?  @unique
+  
+  // Profile Questions
+  legalName String?
+  birthPlace String?
+  currentCity String?
+  currentState String?
+  currentCountry String?
+  maritalStatus String?
+  dateOfBirth DateTime?
+  bio String?
+  tagline String?
+  
+  // Contact Information
+  phoneNumber String?
+  email String?
+  
+  // Professional Information
+  occupation String?
+  employer String?
+  education String?
+  
+  // Government IDs
+  socialSecurity String?
+  driversLicense String?
+  passport String?
+  
+  // Additional Information
+  previousAddresses String?
+  militaryService String?
+  criminalHistory String?
+  
+  // Profile Section Visibility
+  showUsername Boolean @default(false)
+  showTagline Boolean @default(false)
+  showBio Boolean @default(false)
+  // Individual Identity Verification field visibility
+  showLegalName Boolean @default(false)
+  showDateOfBirth Boolean @default(false)
+  showBirthPlace Boolean @default(false)
+  showCurrentCity Boolean @default(false)
+  showCurrentState Boolean @default(false)
+  showCurrentCountry Boolean @default(false)
+  showMaritalStatus Boolean @default(false)
+  // Section visibility
+  showBasicInfo Boolean @default(false)
+  showContactInfo Boolean @default(false)
+  showProfessionalInfo Boolean @default(false)
+  showGovernmentIds Boolean @default(false)
+  showAdditionalInfo Boolean @default(false)
+  
+  // Profile Picture
+  profilePicture String?
+  
+  // Banner
+  bannerType String?
+  bannerVideoUrl String?
+  bannerImageUrls String[]
+  
+  // Notification Settings
+  notificationSettings Json?
+  
+  // Status
+  isVerified Boolean @default(false)
+  isWitness Boolean @default(false)
+  isAdmin Boolean @default(false)
+  witnessBadge String?
+  
+  // **EMERGENCY CHILD SAFETY FIELDS**
+  ageVerified Boolean @default(false)
+  hasCompletedInitialVerification Boolean @default(false)
+  isMinor Boolean @default(false)
+  age Int?
+  requiresParentalConsent Boolean @default(false)
+  ageVerificationDate DateTime?
+  parentalConsentReceived Boolean @default(false)
+  parentalContactEmail String?
+  
+  // Age-based restrictions
+  canCreateProfile Boolean @default(true)
+  contentModerationLevel String @default("STANDARD") // STANDARD, STRICT
+  
+  // Enhanced privacy controls for minors
+  profilePrivate Boolean @default(false)
+  allowDirectMessages Boolean @default(true)
+  showInSearch Boolean @default(true)
+  requireFollowApproval Boolean @default(false)
+  
+  // **SANCTUARY ACCESS - SPIRITUAL READINESS**
+  sanctuaryAccess Boolean @default(false)
+  lightFoundDate DateTime?
+  spiritualJourneyCompleted Boolean @default(false)
+  faithTestimonial String? // Their testimony of finding the light
+  scriptureFoundation String? // Scripture reference that opened their heart
+  veilLifted Boolean @default(false) // When they've passed through the veil
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  questions Question[]
+  posts Post[]
+  videos Video[]
+  videoLikes VideoLike[]
+  videoComments VideoComment[]
+  testimonies Testimony[]
+  testimonyVotes TestimonyVote[]
+  
+  // Messaging
+  sentMessages Message[] @relation("SentMessages")
+  receivedMessages Message[] @relation("ReceivedMessages")
+  
+  // News Feed
+  authoredPosts NewsFeedPost[] @relation("AuthoredPosts")
+  postLikes PostLike[] @relation("PostLikes")
+  postVotes PostVote[] @relation("PostVotes")
+  postComments PostComment[] @relation("PostComments")
+  commentReactions CommentReaction[] @relation("CommentReactions")
+  pollVotes PollVote[] @relation("PollVotes")
+  proposedSolutions IssueSolution[] @relation("SolutionProposer")
+  
+  // Friendships
+  friendRequests Friendship[] @relation("FriendRequests")
+  friendRequestsReceived Friendship[] @relation("FriendRequestsReceived")
+  
+  // Follow System
+  following Follow[] @relation("Following") // Users this user is following
+  followers Follow[] @relation("Followers") // Users following this user
+  
+  // User Reports
+  reportsReceived UserReport[] @relation("ReportsReceived") // Reports filed against this user
+  reportsSubmitted UserReport[] @relation("ReportsSubmitted") // Reports filed by this user
+  postReportsSubmitted PostReport[] @relation("PostReportsSubmitted") // Post reports filed by this user
+  
+  // Notifications
+  notifications Notification[] @relation("UserNotifications") // Notifications received
+  notificationsTriggered Notification[] @relation("NotificationsTriggered") // Notifications caused by this user's actions
+  
+  // **EMERGENCY CHILD SAFETY RELATIONS**
+  quarantinedUploads QuarantinedUpload[] @relation("QuarantinedUploads") // Uploads in quarantine
+  
+  // **COPPA COMPLIANCE RELATIONS**
+  parentalConsent ParentalConsent? // Parental consent record
+  accountTransitions AccountTransition[] @relation("AccountTransitions") // Transition tracking
+  safetyReports ChildSafetyReport[] @relation("SafetyReports") // Reports submitted by user
+  safetyReportsReceived ChildSafetyReport[] @relation("SafetyReportsTarget") // Reports against user
+  safetyViolations SafetyViolation[] @relation("SafetyViolations") // Confirmed violations
+  dobChangeRequests DobChangeRequest[] // DOB change requests submitted by user
+  musicSubmissions MusicSubmission[] // Music submissions by user
+}
+
+model Video {
+  id String @id @default(cuid())
+  url String
+  caption String?
+  mediaType String @default("video") // "video" or "image"
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  likes VideoLike[]
+  comments VideoComment[]
+  isPinned Boolean @default(false)
+  pinnedAt DateTime?
+  createdAt DateTime @default(now())
+}
+
+model VideoLike {
+  id String @id @default(cuid())
+  videoId String
+  userId String
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  
+  @@unique([videoId, userId])
+}
+
+model VideoComment {
+  id String @id @default(cuid())
+  content String
+  videoId String
+  userId String
+  video Video @relation(fields: [videoId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Question {
+  id String @id @default(cuid())
+  content String
+  answer String?
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+model Post {
+  id String @id @default(cuid())
+  content String
+  userId String
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+enum TestimonyStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+model Testimony {
+  id String @id @default(cuid())
+  content String
+  authorName String
+  contactEmail String?
+  isGuest Boolean @default(false)
+  status TestimonyStatus @default(PENDING)
+  
+  // For registered users
+  userId String?
+  user User? @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Voting system
+  upvotes Int @default(0)
+  downvotes Int @default(0)
+  votes TestimonyVote[]
+  
+  // Moderation info
+  moderatedBy String?
+  moderatedAt DateTime?
+  moderationNotes String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum VoteType {
+  UPVOTE
+  DOWNVOTE
+}
+
+model TestimonyVote {
+  id String @id @default(cuid())
+  testimonyId String
+  userId String
+  voteType VoteType
+  
+  testimony Testimony @relation(fields: [testimonyId], references: [id], onDelete: Cascade)
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Ensure one vote per user per testimony
+  @@unique([testimonyId, userId])
+}
+
+// Messaging System
+model Message {
+  id String @id @default(cuid())
+  senderId String
+  receiverId String
+  recipientId String? // For compatibility with new API
+  subject String?
+  content String
+  originalContent String? // Store original before filtering
+  isRead Boolean @default(false)
+  
+  // **COPPA COMPLIANCE: MESSAGE SAFETY FIELDS**
+  status String @default("SENT") // SENT, PENDING_REVIEW, BLOCKED
+  flaggedForReview Boolean @default(false)
+  flagReason String?
+  requiresModeration Boolean @default(false)
+  parentId String? // For message threading
+  
+  sender User @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver User @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([status, flaggedForReview])
+  @@index([senderId, receiverId])
+}
+
+// News Feed System
+enum NewsFeedType {
+  RANDOM
+  FRIENDS
+  LOCAL
+  NATIONAL
+}
+
+enum PostType {
+  TEXT
+  IMAGE
+  VIDEO
+  TESTIMONY
+  LINK
+  POLL
+}
+
+model NewsFeedPost {
+  id String @id @default(cuid())
+  authorId String
+  title String?
+  content String
+  postType PostType @default(TEXT)
+  imageUrls String[]
+  videoUrl String?
+  linkUrl String?
+  linkTitle String?
+  linkDescription String?
+  
+  // Poll-specific fields
+  pollOptions String[] // JSON array of poll options
+  pollType String? // "ISSUE_REPORT", "SOLUTION_PROPOSAL", "FUNDRAISING"
+  fundingGoal Float? // Target amount for fundraising polls
+  currentFunding Float @default(0) // Current amount raised
+  pollEndsAt DateTime? // When the poll closes
+  allowSolutions Boolean @default(false) // Allow users to propose solutions
+  allowFunding Boolean @default(false) // Allow fundraising for this poll
+  issueLocation String? // Specific location of the reported issue
+  
+  // Categorization
+  feedType NewsFeedType @default(RANDOM)
+  location String? // For LOCAL posts
+  tags String[] // For filtering and search
+  
+  // Engagement
+  likes Int @default(0) // Keep for backward compatibility during migration
+  upvotes Int @default(0)
+  downvotes Int @default(0)
+  shares Int @default(0)
+  comments Int @default(0)
+  
+  author User @relation("AuthoredPosts", fields: [authorId], references: [id], onDelete: Cascade)
+  postLikes PostLike[] // Keep for backward compatibility during migration
+  postVotes PostVote[]
+  postComments PostComment[]
+  pollVotes PollVote[]
+  issuesForThisPost IssueSolution[] @relation("IssuePost")
+  solutionsForThisPost IssueSolution[] @relation("SolutionPost")
+  reports PostReport[] @relation("PostReports")
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model PostLike {
+  id String @id @default(cuid())
+  postId String
+  userId String
+  
+  post NewsFeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation("PostLikes", fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([postId, userId])
+}
+
+model PostVote {
+  id String @id @default(cuid())
+  postId String
+  userId String
+  voteType VoteType
+  
+  post NewsFeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation("PostVotes", fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([postId, userId])
+}
+
+model PostComment {
+  id String @id @default(cuid())
+  postId String
+  userId String
+  content String
+  
+  post NewsFeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation("PostComments", fields: [userId], references: [id], onDelete: Cascade)
+  reactions CommentReaction[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CommentReaction {
+  id String @id @default(cuid())
+  commentId String
+  userId String
+  reactionType String // "AGREE" or "DISAGREE"
+  
+  comment PostComment @relation(fields: [commentId], references: [id], onDelete: Cascade)
+  user User @relation("CommentReactions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([commentId, userId]) // One reaction per user per comment
+}
+
+model PollVote {
+  id String @id @default(cuid())
+  postId String
+  userId String
+  optionIndex Int // Which poll option they selected (0, 1, 2, etc.)
+  
+  post NewsFeedPost @relation(fields: [postId], references: [id], onDelete: Cascade)
+  user User @relation("PollVotes", fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([postId, userId])
+}
+
+// Friendship System
+model Friendship {
+  id String @id @default(cuid())
+  requesterId String
+  addresseeId String
+  status FriendshipStatus @default(PENDING)
+  
+  requester User @relation("FriendRequests", fields: [requesterId], references: [id], onDelete: Cascade)
+  addressee User @relation("FriendRequestsReceived", fields: [addresseeId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@unique([requesterId, addresseeId])
+}
+
+enum FriendshipStatus {
+  PENDING
+  ACCEPTED
+  BLOCKED
+}
+
+// Follow System (for following users without being friends)
+model Follow {
+  id String @id @default(cuid())
+  followerId String // User who is following
+  followingId String // User being followed
+  
+  follower User @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  following User @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([followerId, followingId])
+}
+
+// Issue Solution Linking
+model IssueSolution {
+  id String @id @default(cuid())
+  issuePostId String // Original issue/problem post
+  solutionPostId String // Solution proposal post  
+  proposedBy String // User who proposed the solution
+  
+  issuePost NewsFeedPost @relation("IssuePost", fields: [issuePostId], references: [id], onDelete: Cascade)
+  solutionPost NewsFeedPost @relation("SolutionPost", fields: [solutionPostId], references: [id], onDelete: Cascade)
+  proposer User @relation("SolutionProposer", fields: [proposedBy], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([issuePostId, solutionPostId])
+}
+
+// User Report System
+model UserReport {
+  id String @id @default(cuid())
+  reportedUserId String // User being reported
+  reporterId String // User submitting the report
+  reason String // Reason for the report
+  description String // Detailed description
+  category ReportCategory // Category of the report
+  status ReportStatus @default(PENDING) // Status of the report
+  adminNotes String? // Admin notes for resolution
+  
+  reportedUser User @relation("ReportsReceived", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  reporter User @relation("ReportsSubmitted", fields: [reporterId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  resolvedAt DateTime?
+  resolvedBy String? // Admin who resolved the report
+}
+
+// Post Report System
+model PostReport {
+  id String @id @default(cuid())
+  postId String // Post being reported
+  reporterId String // User submitting the report
+  reason String // Legal violation type
+  description String? // Additional details
+  screenshot String? // Base64 encoded screenshot of the post
+  status ReportStatus @default(PENDING) // Status of the report
+  adminNotes String? // Admin notes for resolution
+  
+  post NewsFeedPost @relation("PostReports", fields: [postId], references: [id], onDelete: Cascade)
+  reporter User @relation("PostReportsSubmitted", fields: [reporterId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  resolvedAt DateTime?
+  resolvedBy String? // Admin who resolved the report
+}
+
+enum ReportCategory {
+  HARASSMENT
+  HATE_SPEECH
+  SPAM
+  INAPPROPRIATE_CONTENT
+  FAKE_PROFILE
+  IMPERSONATION
+  VIOLENCE_THREATS
+  SEXUAL_CONTENT
+  SCAM_FRAUD
+  OTHER
+}
+
+enum ReportStatus {
+  PENDING
+  UNDER_REVIEW
+  RESOLVED
+  DISMISSED
+}
+
+// Inbox Notification System
+model Notification {
+  id String @id @default(cuid())
+  userId String // User receiving the notification
+  type NotificationType
+  title String
+  message String
+  isRead Boolean @default(false)
+  actionUrl String? // Link to the relevant post/comment
+  
+  // Reference data
+  fromUserId String? // User who triggered the notification
+  postId String? // Related post
+  commentId String? // Related comment
+  
+  user User @relation("UserNotifications", fields: [userId], references: [id], onDelete: Cascade)
+  fromUser User? @relation("NotificationsTriggered", fields: [fromUserId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum NotificationType {
+  POST_LIKE
+  POST_COMMENT
+  POST_SHARE
+  NEW_FOLLOWER
+  MENTION
+  SYSTEM_UPDATE
+  NEW_MESSAGE
+}
+
+enum QuarantineStatus {
+  PENDING
+  APPROVED  
+  REJECTED
+}
+
+// **EMERGENCY CHILD SAFETY MODEL**
+// Quarantined uploads requiring manual review
+model QuarantinedUpload {
+  id String @id @default(cuid())
+  
+  uploaderId String
+  uploader User @relation("QuarantinedUploads", fields: [uploaderId], references: [id], onDelete: Cascade)
+  
+  originalFileName String
+  filePath String
+  fileType String
+  fileSize Int
+  
+  flagReason String
+  status QuarantineStatus @default(PENDING)
+  
+  reviewedBy String?
+  reviewedAt DateTime?
+  rejectionReason String?
+  approvedFilePath String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([status, createdAt])
+  @@index([uploaderId])
+}
+
+// **COPPA COMPLIANCE: MESSAGING SAFETY**
+// Logs all messaging between minors and adults for safety monitoring
+model MessageSafetyLog {
+  id String @id @default(cuid())
+  
+  senderId String
+  recipientId String
+  contentLength Int
+  wasFiltered Boolean @default(false)
+  flagReason String?
+  
+  timestamp DateTime @default(now())
+  
+  @@index([senderId, timestamp])
+  @@index([recipientId, timestamp])
+  @@index([wasFiltered, timestamp])
+}
+
+// **COPPA COMPLIANCE: ADMIN ALERTS**
+// Immediate alerts for child safety violations
+model AdminAlert {
+  id String @id @default(cuid())
+  
+  type String // MINOR_SAFETY, INAPPROPRIATE_CONTENT, GROOMING_ATTEMPT
+  priority String // LOW, MEDIUM, HIGH, CRITICAL
+  description String
+  
+  relatedUserId String?
+  targetUserId String?
+  
+  status String @default("PENDING") // PENDING, REVIEWED, RESOLVED
+  reviewedBy String?
+  reviewedAt DateTime?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([status, priority, createdAt])
+  @@index([type, createdAt])
+}
+
+// **COPPA COMPLIANCE: AUTOMATIC TRANSITIONS**
+// Tracks account transitions from minor to adult status
+model AccountTransition {
+  id String @id @default(cuid())
+  
+  userId String
+  user User @relation("AccountTransitions", fields: [userId], references: [id], onDelete: Cascade)
+  
+  transitionType String // MINOR_TO_ADULT, VERIFICATION_UPDATE
+  fromStatus String
+  toStatus String
+  
+  scheduledDate DateTime // 18th birthday
+  completedAt DateTime?
+  
+  notes String?
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([scheduledDate])
+  @@index([userId])
+}
+
+// **COPPA COMPLIANCE: CHILD SAFETY REPORTING**
+// Enhanced reporting system for child protection
+model ChildSafetyReport {
+  id String @id @default(cuid())
+  
+  type String // GROOMING_ATTEMPT, INAPPROPRIATE_CONTACT, CSAM_SUSPECTED, etc.
+  priority String // CRITICAL, HIGH, MEDIUM, LOW
+  
+  reporterId String
+  reporter User @relation("SafetyReports", fields: [reporterId], references: [id], onDelete: Cascade)
+  
+  targetUserId String?
+  targetUser User? @relation("SafetyReportsTarget", fields: [targetUserId], references: [id], onDelete: SetNull)
+  
+  targetContentId String?
+  description String
+  evidence String[] // URLs, screenshots, etc.
+  
+  status String @default("PENDING") // PENDING, UNDER_REVIEW, RESOLVED
+  urgentAction Boolean @default(false)
+  
+  resolution String? // CONFIRMED, FALSE_POSITIVE, REQUIRES_FOLLOWUP
+  reviewedBy String?
+  reviewedAt DateTime?
+  reviewNotes String?
+  actionsTaken String[]
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@index([priority, status, createdAt])
+  @@index([type, createdAt])
+  @@index([reporterId])
+}
+
+// **COPPA COMPLIANCE: SAFETY VIOLATIONS**
+// Track confirmed safety violations for pattern detection
+model SafetyViolation {
+  id String @id @default(cuid())
+  
+  userId String
+  user User @relation("SafetyViolations", fields: [userId], references: [id], onDelete: Cascade)
+  
+  violationType String
+  description String
+  severity String
+  
+  actionsTaken String[]
+  reportId String? // Reference to original report
+  
+  createdAt DateTime @default(now())
+  
+  @@index([userId, createdAt])
+  @@index([violationType, severity])
+}
+
+model ParentalConsent {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  parentEmail String
+  parentName  String
+  relationship String
+  
+  consentToken String @unique
+  status       ParentalConsentStatus @default(PENDING)
+  
+  // Verification details
+  parentVerificationMethod String? // email, phone, etc.
+  parentIpAddress         String?
+  parentUserAgent         String?
+  verifiedAt             DateTime?
+  
+  // Consent details  
+  consentGivenAt         DateTime?
+  consentWithdrawnAt     DateTime?
+  withdrawalReason       String?
+  
+  // Administrative
+  expiresAt    DateTime
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@index([status, createdAt])
+  @@index([consentToken])
+}
+
+enum ParentalConsentStatus {
+  PENDING
+  APPROVED
+  DENIED
+  EXPIRED
+  WITHDRAWN
+}
+
+model Donation {
+  id                      String   @id @default(cuid())
+  stripeSessionId         String   @unique
+  stripePaymentIntentId   String?  
+  amount                  Int      // Amount in cents
+  currency                String   @default("usd")
+  customerEmail           String?
+  customerName            String?
+  metadata                Json     @default("{}")
+  status                  String   @default("pending") // pending, completed, failed, refunded
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+  
+  @@index([status, createdAt])
+  @@index([customerEmail])
+  @@index([stripeSessionId])
+}
+
+model DobChangeRequest {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  currentDOB    DateTime
+  requestedDOB  DateTime?
+  reason        String
+  status        String   @default("PENDING") // PENDING, APPROVED, DENIED, COMPLETED
+  reviewedBy    String?
+  reviewedAt    DateTime?
+  adminNotes    String?
+  
+  // ID Verification Security Fields
+  idDocumentUrl    String?  // Secure URL to uploaded ID document  
+  idDocumentType   String?  // "drivers_license", "passport", "state_id", "military_id"
+  idDocumentHash   String?  // Hash of the document for integrity verification
+  idVerified       Boolean  @default(false)
+  idVerifiedAt     DateTime?
+  idVerifiedBy     String?  // Admin who verified the ID
+  
+  // Security & Audit Trail
+  ipAddress        String?  // Track request origin for security
+  userAgent        String?  // Track user device/browser for audit
+  encryptionKey    String?  // Document encryption key reference
+  auditLog         String?  // JSON log of all verification steps
+  
+  requestedAt   DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  @@index([status, requestedAt])
+  @@index([idVerified, status])
+  @@index([userId])
+}
+
+model MusicSubmission {
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  title           String
+  artist          String
+  genre           String
+  description     String?
+  
+  audioFile       String   // Path to audio file
+  coverImage      String?  // Path to cover image
+  
+  status          String   @default("pending") // pending, approved, rejected
+  reviewedBy      String?  // Admin who reviewed
+  reviewedAt      DateTime?
+  adminNotes      String?  // Admin feedback/reason for rejection
+  
+  playCount       Int      @default(0)
+  likes           Int      @default(0)
+  
+  // Artist Store Fields (Option B)
+  price           Decimal? @default(0.99) // Download price in USD
+  downloads       Int      @default(0) // Number of downloads
+  revenue         Decimal  @default(0) // Total revenue from downloads
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@index([userId])
+  @@index([status, createdAt])
+  @@index([genre])
+}
