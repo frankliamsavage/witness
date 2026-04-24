@@ -2,19 +2,70 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/lib/supabase/client";
+import { getSupabasePublicConfig } from "@/lib/supabase/env";
 
 type Role = "Customer" | "Creator";
 
 export default function SignupPage() {
+  const router = useRouter();
   const [screenName, setScreenName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<Role>("Creator");
-  const [submitted, setSubmitted] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  const onSubmit = (e: React.FormEvent) => {
+  const configured = Boolean(getSupabasePublicConfig());
+
+  const onSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setError(null);
+    setInfo(null);
+
+    if (!configured) {
+      setError(
+        "Supabase is not configured. Copy .env.example to .env.local and add your project URL and anon key.",
+      );
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const supabase = createClient();
+      const { data, error: signErr } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/confirm`,
+          data: {
+            screen_name: screenName.trim(),
+            role,
+          },
+        },
+      });
+
+      if (signErr) {
+        setError(signErr.message);
+        return;
+      }
+
+      if (data.session) {
+        router.refresh();
+        router.push("/dashboard");
+        return;
+      }
+
+      setInfo(
+        "Account created. Check your email for a confirmation link, then sign in. If email confirmation is turned off in Supabase, try logging in.",
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -32,6 +83,15 @@ export default function SignupPage() {
             Both account types can buy products. Creator accounts include submission and royalty tools.
           </p>
 
+          {!configured && (
+            <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
+              Add <code className="text-amber-100">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
+              <code className="text-amber-100">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
+              <code className="text-amber-100">.env.local</code> (see <code className="text-amber-100">.env.example</code>
+              ).
+            </p>
+          )}
+
           <form onSubmit={onSubmit} className="mt-6 grid gap-4">
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-emerald-300">Screen name</span>
@@ -39,6 +99,8 @@ export default function SignupPage() {
                 value={screenName}
                 onChange={(e) => setScreenName(e.target.value)}
                 required
+                minLength={2}
+                maxLength={64}
                 className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                 placeholder="How you appear on WITNESS"
                 autoComplete="nickname"
@@ -58,6 +120,7 @@ export default function SignupPage() {
                   required
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                   placeholder="you@example.com"
+                  autoComplete="email"
                 />
               </label>
 
@@ -90,24 +153,32 @@ export default function SignupPage() {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={8}
                 className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                 placeholder="Create a secure password"
+                autoComplete="new-password"
               />
             </label>
 
+            {error && (
+              <p className="rounded-xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-200">
+                {error}
+              </p>
+            )}
+            {info && (
+              <p className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-100">
+                {info}
+              </p>
+            )}
+
             <button
               type="submit"
-              className="mt-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+              disabled={loading || !configured}
+              className="mt-2 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Create Account
+              {loading ? "Creating…" : "Create Account"}
             </button>
           </form>
-
-          {submitted && (
-            <p className="mt-4 text-sm text-zinc-300">
-              Mock account created. Next step is saving this data to a real auth + database backend.
-            </p>
-          )}
         </section>
 
         <p className="text-sm text-zinc-400">
