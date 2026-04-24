@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 
-type Role = "Customer" | "Creator" | "Staff";
+type Role = "Customer" | "Creator";
 
 export default function SignupPage() {
   const [name, setName] = useState("");
@@ -63,7 +63,6 @@ export default function SignupPage() {
                 >
                   <option value="Customer">Customer</option>
                   <option value="Creator">Creator</option>
-                  <option value="Staff">Staff</option>
                 </select>
               </label>
             </div>
