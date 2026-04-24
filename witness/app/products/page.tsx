@@ -13,7 +13,7 @@ export default function ProductsPage() {
 
   const filteredDesigns = useMemo(() => {
     if (selectedFilter === "All") return mockDesigns.filter((design) => design.moderationStatus === "approved");
-    if (selectedFilter === "New Arrivals") return mockDesigns.filter((design) => design.contentType === "user-submitted");
+    if (selectedFilter === "New Arrivals") return [];
     return mockDesigns.filter((design) => design.category === selectedFilter);
   }, [selectedFilter]);
 
@@ -81,17 +81,11 @@ export default function ProductsPage() {
                       <span className="rounded-full border border-zinc-700 bg-zinc-950/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-300">
                         {design.contentType === "official" ? "Official" : "User Submitted"}
                       </span>
-                      <span
-                        className={
-                          design.moderationStatus === "approved"
-                            ? "rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-300"
-                            : design.moderationStatus === "pending"
-                              ? "rounded-full border border-amber-500/40 bg-amber-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-amber-300"
-                              : "rounded-full border border-rose-500/40 bg-rose-500/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-rose-300"
-                        }
-                      >
-                        {design.moderationStatus}
-                      </span>
+                      {design.moderationStatus === "approved" && (
+                        <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                          Approved
+                        </span>
+                      )}
                     </div>
                     <h2 className="mt-1 text-lg font-semibold text-zinc-100">{design.name}</h2>
 
@@ -126,10 +120,10 @@ export default function ProductsPage() {
                 {selectedFilter === "New Arrivals" ? (
                   <>
                     <p className="mt-2 text-sm text-zinc-300">
-                      New Arrivals is for user-submitted content. No products now, submit design today.
+                      New Arrivals is for user-submitted content. No public submissions are live yet.
                     </p>
                     <p className="mt-2 text-sm text-zinc-400">
-                      If you choose a royalty agreement, you will be able to monitor sales and payouts from your user dashboard.
+                      Once accounts are live, creators with royalty agreements will monitor sales and payouts from their dashboard.
                     </p>
                   </>
                 ) : (
@@ -143,6 +137,14 @@ export default function ProductsPage() {
                 >
                   Submit Design
                 </button>
+                {selectedFilter === "New Arrivals" && (
+                  <Link
+                    href="/dashboard"
+                    className="ml-3 inline-flex rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                  >
+                    Open Dashboard (Preview)
+                  </Link>
+                )}
               </div>
             )}
           </div>
