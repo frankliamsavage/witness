@@ -89,6 +89,15 @@ export default function ProductsPage() {
               ))}
             </div>
 
+            {(selectedFilter === "All" || selectedFilter === "T-Shirts") && (
+              <div className="mb-5 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Official Witness Catalog</p>
+                <p className="mt-1 text-sm text-zinc-300">
+                  These are official Witness designs, including in-house drops and designs where rights were purchased from creators.
+                </p>
+              </div>
+            )}
+
             {filteredDesigns.length > 0 ? (
               <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
                 {filteredDesigns.map((design) => (
@@ -132,9 +141,20 @@ export default function ProductsPage() {
             ) : (
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8">
                 <p className="text-lg font-semibold text-emerald-300">{selectedFilter}</p>
-                <p className="mt-2 text-sm text-zinc-300">
-                  No products now, submit design today.
-                </p>
+                {selectedFilter === "New Arrivals" ? (
+                  <>
+                    <p className="mt-2 text-sm text-zinc-300">
+                      New Arrivals is for user-submitted content. No products now, submit design today.
+                    </p>
+                    <p className="mt-2 text-sm text-zinc-400">
+                      If you choose a royalty agreement, you will be able to monitor sales and payouts from your user dashboard.
+                    </p>
+                  </>
+                ) : (
+                  <p className="mt-2 text-sm text-zinc-300">
+                    No products now, submit design today.
+                  </p>
+                )}
                 <button
                   type="button"
                   className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
