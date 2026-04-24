@@ -14,7 +14,13 @@ export default function Home() {
           <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-300 sm:text-lg">
             Reimagine what a fair economic system can look like when data is open, decisions are collective, and outcomes are built for everyone.
           </p>
-          <div className="mt-7">
+          <div className="mt-7 flex flex-wrap gap-3">
+            <Link
+              href="/products"
+              className="inline-flex items-center rounded-xl border border-emerald-500/40 bg-emerald-500/20 px-5 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/30"
+            >
+              Browse Designs
+            </Link>
             <Link
               href="/how-it-works"
               className="inline-flex items-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-5 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
