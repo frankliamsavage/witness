@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function Home() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -12,6 +14,14 @@ export default function Home() {
           <p className="mt-5 max-w-2xl text-base leading-7 text-zinc-300 sm:text-lg">
             Reimagine what a fair economic system can look like when data is open, decisions are collective, and outcomes are built for everyone.
           </p>
+          <div className="mt-7">
+            <Link
+              href="/how-it-works"
+              className="inline-flex items-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-5 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+            >
+              How Pricing Works
+            </Link>
+          </div>
         </section>
 
         <section className="grid gap-6 md:grid-cols-3">
