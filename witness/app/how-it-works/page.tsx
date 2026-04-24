@@ -41,28 +41,48 @@ export default function HowItWorksPage() {
 
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
             <h2 className="text-2xl font-semibold text-emerald-300">Example breakdown</h2>
-            <p className="mt-2 text-sm text-zinc-400">Simple shirt example.</p>
+            <p className="mt-2 text-sm text-zinc-400">Example: $18.00 t-shirt</p>
 
-            <div className="mt-6 space-y-3">
-              <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/70 px-4 py-3">
-                <span className="text-sm text-zinc-300">Blank shirt</span>
-                <span className="text-lg font-semibold text-zinc-100">$9.00</span>
+            <div className="mt-6 space-y-4">
+              <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">
+                    Base Production Cost (64%)
+                  </p>
+                  <p className="text-sm font-semibold text-zinc-100">$11.50</p>
+                </div>
+                <div className="mt-3 h-2 w-full rounded-full bg-zinc-800">
+                  <div className="h-2 rounded-full bg-emerald-500/80" style={{ width: "64%" }} />
+                </div>
+                <div className="mt-4 space-y-2 text-sm text-zinc-300">
+                  <div className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2">
+                    <span>Blank shirt</span>
+                    <span className="font-semibold text-zinc-100">$9.00 (50%)</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2">
+                    <span>Labor</span>
+                    <span className="font-semibold text-zinc-100">$1.00 (5.5%)</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2">
+                    <span>Supplies</span>
+                    <span className="font-semibold text-zinc-100">$1.50 (8.3%)</span>
+                  </div>
+                </div>
               </div>
-              <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/70 px-4 py-3">
-                <span className="text-sm text-zinc-300">Production labor</span>
-                <span className="text-lg font-semibold text-zinc-100">$1.00</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/70 px-4 py-3">
-                <span className="text-sm text-zinc-300">Supplies / packaging</span>
-                <span className="text-lg font-semibold text-zinc-100">$1.50</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/70 px-4 py-3">
-                <span className="text-sm text-zinc-300">Operating margin</span>
-                <span className="text-lg font-semibold text-zinc-100">$6.50</span>
-              </div>
-              <div className="flex items-center justify-between rounded-lg border border-zinc-800 bg-zinc-950/70 px-4 py-3">
-                <span className="text-sm text-zinc-300">Creator royalty (if applicable)</span>
-                <span className="text-lg font-semibold text-zinc-100">Varies</span>
+
+              <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
+                <div className="flex items-center justify-between">
+                  <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">
+                    Platform / Operating Margin (36%)
+                  </p>
+                  <p className="text-sm font-semibold text-zinc-100">$6.50</p>
+                </div>
+                <div className="mt-3 h-2 w-full rounded-full bg-zinc-800">
+                  <div className="h-2 rounded-full bg-emerald-400/65" style={{ width: "36%" }} />
+                </div>
+                <p className="mt-3 text-sm text-zinc-300">
+                  Covers operations, payment fees, replacements, and growth.
+                </p>
               </div>
             </div>
 
