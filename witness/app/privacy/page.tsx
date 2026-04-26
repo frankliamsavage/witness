@@ -35,7 +35,7 @@ export default function PrivacyPage() {
           <article>
             <h2 className="text-lg font-semibold text-emerald-300">Your choices</h2>
             <p className="mt-2 text-sm leading-7 text-zinc-300">
-              You can request account updates or deletion by contacting support@witnessproject.net.
+              You can request account updates or deletion by contacting WitnessProject.net@gmail.com.
             </p>
           </article>
         </section>

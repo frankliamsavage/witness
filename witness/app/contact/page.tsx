@@ -8,7 +8,7 @@ export default function ContactPage() {
           </p>
           <h1 className="text-3xl font-bold text-zinc-50 sm:text-4xl">Questions? Want to partner? Reach out.</h1>
           <p className="mt-3 text-sm text-zinc-300">
-            Email us anytime at <span className="font-semibold text-emerald-300">support@witnessproject.net</span>.
+            Email us anytime at <span className="font-semibold text-emerald-300">WitnessProject.net@gmail.com</span>.
           </p>
         </section>
 
@@ -44,7 +44,7 @@ export default function ContactPage() {
             >
               Send message
             </button>
-            <p className="text-xs text-zinc-400">Responses are handled through support@witnessproject.net.</p>
+            <p className="text-xs text-zinc-400">Responses are handled through WitnessProject.net@gmail.com.</p>
           </form>
         </section>
       </main>
