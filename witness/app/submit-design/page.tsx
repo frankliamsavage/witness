@@ -2,10 +2,17 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ROYALTY_TIERS } from "@/lib/royalty-tiers";
 
 type Category = "T-Shirts" | "3D Prints";
 type AgreementType = "Royalty" | "One-Time";
+
+const REVENUE_ROYALTY_TIERS = [
+  { name: "Launch", ratePercent: 10, revenueRange: "$0 - $1,000" },
+  { name: "Growth", ratePercent: 15, revenueRange: "$1,000 - $6,000" },
+  { name: "Scale", ratePercent: 20, revenueRange: "$6,000 - $12,000" },
+  { name: "Pro", ratePercent: 25, revenueRange: "$12,000 - $100,000" },
+  { name: "Elite", ratePercent: 30, revenueRange: "$100,000+" },
+];
 
 export default function SubmitDesignPage() {
   const [title, setTitle] = useState("");
@@ -93,24 +100,23 @@ export default function SubmitDesignPage() {
             <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
               <p className="text-sm font-semibold text-emerald-300">Royalty Tier</p>
               <p className="mt-2 text-sm text-zinc-100">
-                Your royalty rate starts at 5% and increases as you sell more.
+                Royalty rates are based on total gross revenue and increase through progressive tiers.
               </p>
-              <div className="mt-3 grid gap-2 sm:grid-cols-3">
-                {ROYALTY_TIERS.map((tier) => (
+              <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-5">
+                {REVENUE_ROYALTY_TIERS.map((tier) => (
                   <div key={tier.name} className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-3">
                     <p className="text-xs uppercase tracking-wide text-zinc-400">{tier.name}</p>
                     <p className="mt-1 text-lg font-bold text-emerald-300">{tier.ratePercent}%</p>
-                    <p className="mt-1 text-xs text-zinc-300">
-                      {tier.maxSales === null
-                        ? `${tier.minSales}+ sales`
-                        : `${tier.minSales}-${tier.maxSales} sales`}
-                    </p>
+                    <p className="mt-1 text-xs text-zinc-300">{tier.revenueRange}</p>
                   </div>
                 ))}
               </div>
+              <p className="mt-3 text-xs text-zinc-300">
+                Progressive tiers apply only to revenue earned inside each range.
+              </p>
               {agreementType === "One-Time" && (
-                <p className="mt-3 text-xs text-zinc-300">
-                  One-time deals use fixed payout terms. Royalties apply when an agreement is set to Royalty.
+                <p className="mt-2 text-xs text-zinc-300">
+                  One-time deals use fixed payout terms. Royalties apply only to Royalty agreements.
                 </p>
               )}
             </section>
