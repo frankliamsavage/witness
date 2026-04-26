@@ -22,12 +22,12 @@ export default function AboutPage() {
         <section className="grid gap-6 lg:grid-cols-[1fr_1.4fr]">
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
             <h2 className="text-xl font-semibold text-emerald-300">Founder photo</h2>
-            <div className="relative mt-4 h-72 overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950/80 sm:h-80">
+            <div className="relative mt-4 aspect-video overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950/90 p-1">
               <Image
                 src="/founders-frank-toni.png"
                 alt="Frank and Toni, founders of Witness Project"
                 fill
-                className="object-cover"
+                className="object-contain"
                 sizes="(max-width: 1024px) 100vw, 40vw"
                 priority
               />
