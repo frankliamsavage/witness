@@ -59,6 +59,14 @@ export default function SignupPage() {
         return;
       }
 
+      const userAlreadyExists = Boolean(
+        data.user && Array.isArray(data.user.identities) && data.user.identities.length === 0,
+      );
+      if (userAlreadyExists) {
+        setInfo("An account with this email already exists. Log in instead, or reset your password.");
+        return;
+      }
+
       setInfo(
         "Account created. Check your email for a confirmation link, then sign in. If email confirmation is turned off in Supabase, try logging in.",
       );
