@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { SupabaseMissingConfigNotice } from "@/components/SupabaseMissingConfigNotice";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 
@@ -12,10 +13,7 @@ export default async function DashboardPage() {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100">
         <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-16 sm:px-10 lg:px-16">
-          <p className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4 text-sm text-amber-100">
-            Add Supabase environment variables (<code className="text-amber-50">.env.local</code>) to enable
-            accounts. See <code className="text-amber-50">.env.example</code>.
-          </p>
+          <SupabaseMissingConfigNotice className="p-4 text-amber-100" />
         </main>
       </div>
     );

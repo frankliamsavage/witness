@@ -3,6 +3,7 @@
 import { useState, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
+import { SupabaseMissingConfigNotice } from "@/components/SupabaseMissingConfigNotice";
 import { createClient } from "@/lib/supabase/client";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 
@@ -25,7 +26,7 @@ function LoginForm() {
 
     if (!configured) {
       setError(
-        "Supabase is not configured. Copy .env.example to .env.local and add your project URL and anon key.",
+        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (.env.local locally, or your host's environment variables in production).",
       );
       return;
     }
@@ -62,12 +63,7 @@ function LoginForm() {
         Sign in to manage your submissions, profile, and royalty dashboard.
       </p>
 
-      {!configured && (
-        <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
-          Add your Supabase keys to <code className="text-amber-100">.env.local</code> (see{" "}
-          <code className="text-amber-100">.env.example</code>).
-        </p>
-      )}
+      {!configured && <SupabaseMissingConfigNotice />}
 
       {urlError === "confirm" && (
         <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">

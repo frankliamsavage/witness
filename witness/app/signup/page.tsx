@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { SupabaseMissingConfigNotice } from "@/components/SupabaseMissingConfigNotice";
 import { createClient } from "@/lib/supabase/client";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 
@@ -27,7 +28,7 @@ export default function SignupPage() {
 
     if (!configured) {
       setError(
-        "Supabase is not configured. Copy .env.example to .env.local and add your project URL and anon key.",
+        "Supabase is not configured. Add NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY or NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY (.env.local locally, or your host's environment variables in production).",
       );
       return;
     }
@@ -83,14 +84,7 @@ export default function SignupPage() {
             Both account types can buy products. Creator accounts include submission and royalty tools.
           </p>
 
-          {!configured && (
-            <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 p-3 text-sm text-amber-200">
-              Add <code className="text-amber-100">NEXT_PUBLIC_SUPABASE_URL</code> and{" "}
-              <code className="text-amber-100">NEXT_PUBLIC_SUPABASE_ANON_KEY</code> to{" "}
-              <code className="text-amber-100">.env.local</code> (see <code className="text-amber-100">.env.example</code>
-              ).
-            </p>
-          )}
+          {!configured && <SupabaseMissingConfigNotice />}
 
           <form onSubmit={onSubmit} className="mt-6 grid gap-4">
             <label className="grid gap-2">
