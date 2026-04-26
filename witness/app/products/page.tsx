@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { productCatalog } from "@/lib/product-catalog";
 
-const filters = ["All", "Official", "Creator Royalty", "Rights Acquired"] as const;
+const filters = ["All", "Official", "Creator Profiles", "Rights Acquired"] as const;
 type FilterOption = (typeof filters)[number];
 type ProductSize = "S" | "M" | "L" | "XL" | "XXL";
 type ProductColor = "Black" | "White" | "Emerald" | "Charcoal";
@@ -35,9 +35,21 @@ type CartItem = {
 
 export default function ProductsPage() {
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>("All");
+  const [selectedCreator, setSelectedCreator] = useState("All Authors");
   const [selectedSizes, setSelectedSizes] = useState<Record<number, ProductSize>>({});
   const [selectedColors, setSelectedColors] = useState<Record<number, ProductColor>>({});
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
+  const creatorOptions = useMemo(() => {
+    const creators = Array.from(
+      new Set(
+        productCatalog
+          .filter((design) => design.moderationStatus === "approved")
+          .map((design) => design.creator),
+      ),
+    ).sort((a, b) => a.localeCompare(b));
+    return ["All Authors", ...creators];
+  }, []);
 
   const filteredDesigns = useMemo(() => {
     if (selectedFilter === "All") return productCatalog.filter((design) => design.moderationStatus === "approved");
@@ -46,13 +58,10 @@ export default function ProductsPage() {
         (design) => design.moderationStatus === "approved" && design.contentType === "official",
       );
     }
-    if (selectedFilter === "Creator Royalty") {
-      return productCatalog.filter(
-        (design) =>
-          design.moderationStatus === "approved" &&
-          design.contentType === "user-submitted" &&
-          design.agreementType === "Royalty",
-      );
+    if (selectedFilter === "Creator Profiles") {
+      const approved = productCatalog.filter((design) => design.moderationStatus === "approved");
+      if (selectedCreator === "All Authors") return approved;
+      return approved.filter((design) => design.creator === selectedCreator);
     }
     return productCatalog.filter(
       (design) =>
@@ -60,7 +69,7 @@ export default function ProductsPage() {
         design.contentType === "user-submitted" &&
         design.agreementType === "One-Time",
     );
-  }, [selectedFilter]);
+  }, [selectedCreator, selectedFilter]);
 
   const cartSubtotal = useMemo(
     () => cartItems.reduce((sum, item) => sum + item.price, 0),
@@ -121,6 +130,30 @@ export default function ProductsPage() {
                 <p className="mt-1 text-sm text-zinc-300">
                   These are official Witness designs, including in-house drops and designs where rights were purchased from creators.
                 </p>
+              </div>
+            )}
+            {selectedFilter === "Creator Profiles" && (
+              <div className="mb-5 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
+                <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Creator Profiles</p>
+                <p className="mt-1 text-sm text-zinc-300">
+                  Select an IP author to browse designs associated with that creator profile.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {creatorOptions.map((creator) => (
+                    <button
+                      key={creator}
+                      type="button"
+                      onClick={() => setSelectedCreator(creator)}
+                      className={
+                        creator === selectedCreator
+                          ? "rounded-full border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-300"
+                          : "rounded-full border border-zinc-700 bg-zinc-900/70 px-3 py-1.5 text-xs font-medium text-zinc-300 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                      }
+                    >
+                      {creator}
+                    </button>
+                  ))}
+                </div>
               </div>
             )}
 
@@ -257,13 +290,13 @@ export default function ProductsPage() {
             ) : (
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8">
                 <p className="text-lg font-semibold text-emerald-300">{selectedFilter}</p>
-                {selectedFilter === "Creator Royalty" ? (
+                {selectedFilter === "Creator Profiles" ? (
                   <>
                     <p className="mt-2 text-sm text-zinc-300">
-                      No creator-royalty products are live yet.
+                      No approved designs are available for this creator yet.
                     </p>
                     <p className="mt-2 text-sm text-zinc-400">
-                      Be the first to submit and launch under a royalty agreement.
+                      Creator profile matching appears here once their designs are approved.
                     </p>
                   </>
                 ) : selectedFilter === "Rights Acquired" ? (
@@ -281,7 +314,7 @@ export default function ProductsPage() {
                 >
                   Submit Design
                 </Link>
-                {(selectedFilter === "Creator Royalty" || selectedFilter === "Rights Acquired") && (
+                {(selectedFilter === "Creator Profiles" || selectedFilter === "Rights Acquired") && (
                   <Link
                     href="/submit-design"
                     className="ml-3 inline-flex rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
