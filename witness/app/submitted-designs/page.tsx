@@ -65,7 +65,7 @@ export default async function SubmittedDesignsPage() {
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
           <h2 className="text-xl font-semibold text-emerald-300">Submission pipeline</h2>
           <p className="mt-2 text-sm text-zinc-300">
-            Status legend: Pending = in review, Approved = live and earning royalties, Sold to Witness = one-time payout completed.
+            Status legend: Pending = in review, Approved = accepted submission, Sold to Witness = one-time payout completed and rights transferred.
           </p>
           {submissions.length === 0 ? (
             <div className="mt-5 rounded-xl border border-zinc-700 bg-zinc-950/80 p-5">
@@ -110,15 +110,15 @@ export default async function SubmittedDesignsPage() {
         </section>
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
-          <h2 className="text-xl font-semibold text-emerald-300">Official Witness Items by You</h2>
+          <h2 className="text-xl font-semibold text-emerald-300">Official Witness Catalog (Rights Owned)</h2>
           <p className="mt-2 text-sm text-zinc-300">
-            These are live official catalog products associated with your creator identity.
+            One-time buyout submissions move here after rights are sold to Witness. Items listed here are royalty-free for Witness sales.
           </p>
           {officialItemsByCreator.length === 0 ? (
             <div className="mt-5 rounded-xl border border-zinc-700 bg-zinc-950/80 p-5">
               <p className="text-sm font-semibold text-zinc-100">No official items linked yet.</p>
               <p className="mt-2 text-sm text-zinc-300">
-                Once official products are linked to your creator identity, they will appear here.
+                Once a submission is acquired through a one-time buyout and published, it will appear here.
               </p>
             </div>
           ) : (
@@ -130,7 +130,7 @@ export default async function SubmittedDesignsPage() {
                   <p className="mt-2 text-sm text-zinc-300">
                     Selling from <span className="font-semibold text-emerald-300">${item.fromPrice.toFixed(2)}</span>
                   </p>
-                  <p className="mt-1 text-xs text-zinc-400">Status: Live official catalog</p>
+                  <p className="mt-1 text-xs text-zinc-400">Status: Live official catalog · Royalty-free</p>
                   <p className="mt-3">
                     <Link
                       href="/products"

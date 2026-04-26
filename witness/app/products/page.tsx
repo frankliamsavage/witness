@@ -139,6 +139,11 @@ export default function ProductsPage() {
                       <span className="rounded-full border border-zinc-700 bg-zinc-950/80 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-zinc-300">
                         {design.contentType === "official" ? "Official" : "User Submitted"}
                       </span>
+                      {design.contentType === "official" && (
+                        <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
+                          Royalty-Free
+                        </span>
+                      )}
                       {design.moderationStatus === "approved" && (
                         <span className="rounded-full border border-emerald-500/40 bg-emerald-500/15 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wide text-emerald-300">
                           Approved
