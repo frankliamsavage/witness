@@ -3,11 +3,71 @@ import { redirect } from "next/navigation";
 import { SupabaseMissingConfigNotice } from "@/components/SupabaseMissingConfigNotice";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
-import { getProgressToNextTier, getRoyaltyTier, ROYALTY_TIERS } from "@/lib/royalty-tiers";
 
 export const dynamic = "force-dynamic";
 
-type UserMeta = { screen_name?: string; role?: string; total_sales?: number | string };
+type UserMeta = {
+  screen_name?: string;
+  role?: string;
+  total_sales?: number | string;
+  total_revenue?: number | string;
+};
+
+type RevenueRoyaltyTier = {
+  name: string;
+  ratePercent: number;
+  minRevenue: number;
+  maxRevenue: number | null;
+};
+
+const REVENUE_ROYALTY_TIERS: RevenueRoyaltyTier[] = [
+  { name: "Launch", ratePercent: 10, minRevenue: 0, maxRevenue: 1000 },
+  { name: "Growth", ratePercent: 15, minRevenue: 1000, maxRevenue: 6000 },
+  { name: "Scale", ratePercent: 20, minRevenue: 6000, maxRevenue: 12000 },
+  { name: "Pro", ratePercent: 25, minRevenue: 12000, maxRevenue: 100000 },
+  { name: "Elite", ratePercent: 30, minRevenue: 100000, maxRevenue: null },
+];
+
+function parseMoney(value: number | string | undefined): number {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  if (typeof value === "string") {
+    const parsed = Number.parseFloat(value);
+    return Number.isFinite(parsed) ? parsed : 0;
+  }
+  return 0;
+}
+
+function getRevenueRoyaltyTier(totalRevenue: number): RevenueRoyaltyTier {
+  for (const tier of REVENUE_ROYALTY_TIERS) {
+    const inTier = tier.maxRevenue === null
+      ? totalRevenue >= tier.minRevenue
+      : totalRevenue >= tier.minRevenue && totalRevenue < tier.maxRevenue;
+    if (inTier) return tier;
+  }
+  return REVENUE_ROYALTY_TIERS[0];
+}
+
+function getProgressToNextRevenueTier(totalRevenue: number) {
+  const currentIndex = REVENUE_ROYALTY_TIERS.findIndex((tier) =>
+    tier.maxRevenue === null
+      ? totalRevenue >= tier.minRevenue
+      : totalRevenue >= tier.minRevenue && totalRevenue < tier.maxRevenue,
+  );
+  const safeIndex = currentIndex === -1 ? 0 : currentIndex;
+  const currentTier = REVENUE_ROYALTY_TIERS[safeIndex];
+  const nextTier = REVENUE_ROYALTY_TIERS[safeIndex + 1] ?? null;
+
+  if (!nextTier || currentTier.maxRevenue === null) {
+    return { nextTier: null, percent: 100, revenueNeeded: 0 };
+  }
+
+  const tierRange = currentTier.maxRevenue - currentTier.minRevenue;
+  const progressInTier = Math.min(Math.max(totalRevenue - currentTier.minRevenue, 0), tierRange);
+  const percent = tierRange > 0 ? (progressInTier / tierRange) * 100 : 0;
+  const revenueNeeded = Math.max(0, nextTier.minRevenue - totalRevenue);
+
+  return { nextTier, percent, revenueNeeded };
+}
 
 export default async function DashboardPage() {
   if (!getSupabasePublicConfig()) {
@@ -28,15 +88,9 @@ export default async function DashboardPage() {
   }
 
   const meta = user.user_metadata as UserMeta | null;
-  const totalSalesRaw = meta?.total_sales;
-  const totalSales =
-    typeof totalSalesRaw === "number"
-      ? totalSalesRaw
-      : typeof totalSalesRaw === "string"
-        ? Number.parseInt(totalSalesRaw, 10) || 0
-        : 0;
-  const currentTier = getRoyaltyTier(totalSales);
-  const progress = getProgressToNextTier(totalSales);
+  const totalRevenue = parseMoney(meta?.total_revenue) || parseMoney(meta?.total_sales);
+  const currentTier = getRevenueRoyaltyTier(totalRevenue);
+  const progress = getProgressToNextRevenueTier(totalRevenue);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -102,7 +156,7 @@ export default async function DashboardPage() {
               {currentTier.ratePercent}%)
             </p>
             <p className="mt-1 text-sm text-zinc-300">
-              Total sales: <span className="font-semibold text-zinc-100">{totalSales}</span>
+              Total gross revenue: <span className="font-semibold text-zinc-100">${totalRevenue.toFixed(2)}</span>
             </p>
             {progress.nextTier ? (
               <>
@@ -116,12 +170,12 @@ export default async function DashboardPage() {
                   />
                 </div>
                 <p className="mt-2 text-xs text-zinc-300">
-                  {progress.salesNeeded} more sale{progress.salesNeeded === 1 ? "" : "s"} to unlock the next tier.
+                  ${progress.revenueNeeded.toFixed(2)} more revenue to unlock the next tier.
                 </p>
               </>
             ) : (
               <p className="mt-3 text-xs text-emerald-300">
-                You are in the top tier at 15%. Keep pushing sales momentum.
+                You are in the top tier at 30%. Keep pushing momentum.
               </p>
             )}
           </article>
@@ -148,17 +202,17 @@ export default async function DashboardPage() {
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
           <h2 className="text-lg font-semibold text-emerald-300">Royalty Tiers</h2>
           <p className="mt-2 text-sm text-zinc-300">
-            Your royalty rate starts at 5% and increases as your total sales grow.
+            Your royalty rate starts at 10% and increases as your total gross revenue grows.
           </p>
-          <div className="mt-4 grid gap-3 sm:grid-cols-3">
-            {ROYALTY_TIERS.map((tier) => (
+          <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {REVENUE_ROYALTY_TIERS.map((tier) => (
               <div key={tier.name} className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-3">
                 <p className="text-xs uppercase tracking-wide text-zinc-400">{tier.name}</p>
                 <p className="mt-1 text-lg font-bold text-emerald-300">{tier.ratePercent}%</p>
                 <p className="mt-1 text-xs text-zinc-300">
-                  {tier.maxSales === null
-                    ? `${tier.minSales}+ total sales`
-                    : `${tier.minSales}-${tier.maxSales} total sales`}
+                  {tier.maxRevenue === null
+                    ? `$${tier.minRevenue.toLocaleString()}+ revenue`
+                    : `$${tier.minRevenue.toLocaleString()} - $${tier.maxRevenue.toLocaleString()} revenue`}
                 </p>
               </div>
             ))}
