@@ -45,7 +45,9 @@ export default function ProductsPage() {
     if (selectedFilter === "All")
       return productCatalog.filter((design) => design.moderationStatus === "approved");
     if (selectedFilter === "New Arrivals") return [];
-    return productCatalog.filter((design) => design.category === selectedFilter);
+    return productCatalog.filter(
+      (design) => design.category === selectedFilter && design.moderationStatus === "approved",
+    );
   }, [selectedFilter]);
 
   const cartSubtotal = useMemo(
