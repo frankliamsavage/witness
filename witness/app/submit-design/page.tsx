@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { ROYALTY_TIERS } from "@/lib/royalty-tiers";
 
 type Category = "T-Shirts" | "3D Prints";
 type AgreementType = "Royalty" | "One-Time";
@@ -10,7 +11,6 @@ export default function SubmitDesignPage() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("T-Shirts");
   const [agreementType, setAgreementType] = useState<AgreementType>("Royalty");
-  const [royaltyPercent, setRoyaltyPercent] = useState("10");
   const [imageName, setImageName] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -88,19 +88,30 @@ export default function SubmitDesignPage() {
               </label>
             </div>
 
-            {agreementType === "Royalty" && (
-              <label className="grid gap-2 sm:max-w-xs">
-                <span className="text-sm font-semibold text-emerald-300">Royalty percentage</span>
-                <input
-                  type="number"
-                  min={1}
-                  max={100}
-                  value={royaltyPercent}
-                  onChange={(e) => setRoyaltyPercent(e.target.value)}
-                  className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
-                />
-              </label>
-            )}
+            <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+              <p className="text-sm font-semibold text-emerald-300">Royalty Tier</p>
+              <p className="mt-2 text-sm text-zinc-100">
+                Your royalty rate starts at 5% and increases as you sell more.
+              </p>
+              <div className="mt-3 grid gap-2 sm:grid-cols-3">
+                {ROYALTY_TIERS.map((tier) => (
+                  <div key={tier.name} className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-3">
+                    <p className="text-xs uppercase tracking-wide text-zinc-400">{tier.name}</p>
+                    <p className="mt-1 text-lg font-bold text-emerald-300">{tier.ratePercent}%</p>
+                    <p className="mt-1 text-xs text-zinc-300">
+                      {tier.maxSales === null
+                        ? `${tier.minSales}+ sales`
+                        : `${tier.minSales}-${tier.maxSales} sales`}
+                    </p>
+                  </div>
+                ))}
+              </div>
+              {agreementType === "One-Time" && (
+                <p className="mt-3 text-xs text-zinc-300">
+                  One-time deals use fixed payout terms. Royalties apply when an agreement is set to Royalty.
+                </p>
+              )}
+            </section>
 
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-emerald-300">Image upload</span>

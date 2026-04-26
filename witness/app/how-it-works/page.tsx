@@ -1,3 +1,5 @@
+import { ROYALTY_TIERS } from "@/lib/royalty-tiers";
+
 export default function HowItWorksPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -33,7 +35,7 @@ export default function HowItWorksPage() {
               <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
                 <p className="text-base font-semibold text-emerald-300">3. Creator Royalty</p>
                 <p className="mt-2 text-sm leading-6 text-zinc-300">
-                  If the product uses submitted intellectual property, the creator may receive a royalty per sale or a one-time payment agreement.
+                  If the product uses submitted intellectual property, creators on royalty agreements move through tiered rates as total sales grow.
                 </p>
               </div>
             </div>
@@ -94,6 +96,27 @@ export default function HowItWorksPage() {
               <p className="mt-2 text-sm text-zinc-300">Final customer price depends on royalty agreement terms.</p>
             </div>
           </article>
+        </section>
+
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
+          <h2 className="text-2xl font-semibold text-emerald-300">Tiered Royalty System</h2>
+          <p className="mt-3 max-w-4xl text-sm leading-7 text-zinc-300">
+            Royalty creators start at 5% and unlock higher rates as lifetime sales increase. Growth is automatic.
+          </p>
+          <div className="mt-5 grid gap-4 sm:grid-cols-3">
+            {ROYALTY_TIERS.map((tier) => (
+              <div key={tier.name} className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
+                <p className="text-base font-semibold text-emerald-300">
+                  {tier.ratePercent}% · {tier.name}
+                </p>
+                <p className="mt-2 text-sm text-zinc-300">
+                  {tier.maxSales === null
+                    ? `${tier.minSales}+ total sales`
+                    : `${tier.minSales}-${tier.maxSales} total sales`}
+                </p>
+              </div>
+            ))}
+          </div>
         </section>
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
