@@ -17,7 +17,7 @@ export type Design = {
   royaltyPercent?: number;
 };
 
-export const mockDesigns: Design[] = [
+export const productCatalog: Design[] = [
   {
     id: 1,
     name: "Fair Prices Scale",

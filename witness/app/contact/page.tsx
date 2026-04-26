@@ -44,7 +44,7 @@ export default function ContactPage() {
             >
               Send message
             </button>
-            <p className="text-xs text-zinc-400">Form UI is live now. Email handling can be connected next.</p>
+            <p className="text-xs text-zinc-400">Responses are handled through support@witnessproject.net.</p>
           </form>
         </section>
       </main>

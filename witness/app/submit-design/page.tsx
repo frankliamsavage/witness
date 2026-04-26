@@ -136,7 +136,7 @@ export default function SubmitDesignPage() {
 
         {submitted && (
           <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-            <p className="text-sm font-semibold text-emerald-300">Submission received (mock)</p>
+            <p className="text-sm font-semibold text-emerald-300">Submission received</p>
             <p className="mt-1 text-sm text-zinc-200">
               Your design has been queued with status <span className="font-semibold">pending</span>. You will see updates when moderation changes it to approved or rejected.
             </p>

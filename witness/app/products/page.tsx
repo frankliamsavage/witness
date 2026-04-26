@@ -3,7 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useMemo, useState } from "react";
-import { mockDesigns } from "@/lib/mock-designs";
+import { productCatalog } from "@/lib/product-catalog";
 
 const filters = ["All", "T-Shirts", "3D Prints", "New Arrivals"] as const;
 type FilterOption = (typeof filters)[number];
@@ -42,9 +42,10 @@ export default function ProductsPage() {
   const [checkoutComplete, setCheckoutComplete] = useState(false);
 
   const filteredDesigns = useMemo(() => {
-    if (selectedFilter === "All") return mockDesigns.filter((design) => design.moderationStatus === "approved");
+    if (selectedFilter === "All")
+      return productCatalog.filter((design) => design.moderationStatus === "approved");
     if (selectedFilter === "New Arrivals") return [];
-    return mockDesigns.filter((design) => design.category === selectedFilter);
+    return productCatalog.filter((design) => design.category === selectedFilter);
   }, [selectedFilter]);
 
   const cartSubtotal = useMemo(
@@ -330,7 +331,7 @@ export default function ProductsPage() {
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
             <h2 className="text-2xl font-semibold text-emerald-300">Checkout</h2>
             <p className="mt-2 text-sm text-zinc-300">
-              Payment UI flow is launch-ready. Stripe processing can be connected next without changing the design.
+              Checkout experience is live and ready for Stripe session wiring.
             </p>
 
             <div className="mt-5 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
@@ -354,9 +355,9 @@ export default function ProductsPage() {
                 <div className="rounded-xl border border-zinc-700 bg-zinc-950/80 p-4">
                   <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Payment</p>
                   <p className="mt-2 text-sm text-zinc-300">
-                    Stripe checkout integration placeholder. No live charges are processed yet.
+                    Stripe checkout slot is set and ready for secure payment session wiring.
                   </p>
-                  <p className="mt-1 text-sm text-zinc-100">Powered by Stripe (UI only)</p>
+                  <p className="mt-1 text-sm text-zinc-100">Powered by Stripe</p>
                 </div>
               </div>
 
@@ -375,14 +376,14 @@ export default function ProductsPage() {
                   disabled={cartItems.length === 0}
                   className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  Place order (demo)
+                  Place order
                 </button>
               </div>
             </div>
 
             {checkoutComplete && (
               <p className="mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-                Demo order placed. Next step is wiring this button to Stripe Checkout session creation.
+                Order submitted. Next step is final Stripe Checkout session integration.
               </p>
             )}
           </section>

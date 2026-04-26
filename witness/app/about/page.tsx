@@ -22,11 +22,8 @@ export default function AboutPage() {
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
             <h2 className="text-xl font-semibold text-emerald-300">Founder photo</h2>
             <div className="mt-4 flex h-72 items-center justify-center rounded-xl border border-zinc-700 bg-zinc-950/80 text-sm text-zinc-400">
-              Add Frank&apos;s photo here
+              Frank Savage photo coming soon
             </div>
-            <p className="mt-3 text-xs text-zinc-400">
-              Placeholder block is live now. Replace with your real image when ready.
-            </p>
           </article>
 
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
