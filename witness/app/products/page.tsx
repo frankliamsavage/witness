@@ -5,7 +5,7 @@ import Image from "next/image";
 import { useMemo, useState } from "react";
 import { productCatalog } from "@/lib/product-catalog";
 
-const filters = ["All", "T-Shirts", "3D Prints", "New Arrivals"] as const;
+const filters = ["All", "Official", "Creator Royalty", "Rights Acquired"] as const;
 type FilterOption = (typeof filters)[number];
 type ProductSize = "S" | "M" | "L" | "XL" | "XXL";
 type ProductColor = "Black" | "White" | "Emerald" | "Charcoal";
@@ -42,11 +42,25 @@ export default function ProductsPage() {
   const [checkoutComplete, setCheckoutComplete] = useState(false);
 
   const filteredDesigns = useMemo(() => {
-    if (selectedFilter === "All")
-      return productCatalog.filter((design) => design.moderationStatus === "approved");
-    if (selectedFilter === "New Arrivals") return [];
+    if (selectedFilter === "All") return productCatalog.filter((design) => design.moderationStatus === "approved");
+    if (selectedFilter === "Official") {
+      return productCatalog.filter(
+        (design) => design.moderationStatus === "approved" && design.contentType === "official",
+      );
+    }
+    if (selectedFilter === "Creator Royalty") {
+      return productCatalog.filter(
+        (design) =>
+          design.moderationStatus === "approved" &&
+          design.contentType === "user-submitted" &&
+          design.agreementType === "Royalty",
+      );
+    }
     return productCatalog.filter(
-      (design) => design.category === selectedFilter && design.moderationStatus === "approved",
+      (design) =>
+        design.moderationStatus === "approved" &&
+        design.contentType === "user-submitted" &&
+        design.agreementType === "One-Time",
     );
   }, [selectedFilter]);
 
@@ -107,7 +121,7 @@ export default function ProductsPage() {
               ))}
             </div>
 
-            {(selectedFilter === "All" || selectedFilter === "T-Shirts") && (
+            {(selectedFilter === "All" || selectedFilter === "Official") && (
               <div className="mb-5 rounded-xl border border-zinc-800 bg-zinc-900/60 px-4 py-3">
                 <p className="text-xs font-semibold uppercase tracking-wide text-emerald-300">Official Witness Catalog</p>
                 <p className="mt-1 text-sm text-zinc-300">
@@ -242,18 +256,22 @@ export default function ProductsPage() {
             ) : (
               <div className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-8">
                 <p className="text-lg font-semibold text-emerald-300">{selectedFilter}</p>
-                {selectedFilter === "New Arrivals" ? (
+                {selectedFilter === "Creator Royalty" ? (
                   <>
                     <p className="mt-2 text-sm text-zinc-300">
-                      Be the first to submit! New Arrivals is waiting for approved community designs.
+                      No creator-royalty products are live yet.
                     </p>
                     <p className="mt-2 text-sm text-zinc-400">
-                      Once accounts are live, creators with royalty agreements will monitor sales and payouts from their dashboard.
+                      Be the first to submit and launch under a royalty agreement.
                     </p>
                   </>
+                ) : selectedFilter === "Rights Acquired" ? (
+                  <p className="mt-2 text-sm text-zinc-300">
+                    No rights-acquired products are live yet.
+                  </p>
                 ) : (
                   <p className="mt-2 text-sm text-zinc-300">
-                    No products now, submit design today.
+                    No products are live in this section yet.
                   </p>
                 )}
                 <Link
@@ -262,12 +280,12 @@ export default function ProductsPage() {
                 >
                   Submit Design
                 </Link>
-                {selectedFilter === "New Arrivals" && (
+                {(selectedFilter === "Creator Royalty" || selectedFilter === "Rights Acquired") && (
                   <Link
                     href="/submit-design"
                     className="ml-3 inline-flex rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
                   >
-                    Go submit now
+                    Be first to submit
                   </Link>
                 )}
               </div>
