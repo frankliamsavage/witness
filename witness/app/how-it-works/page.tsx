@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const REVENUE_ROYALTY_TIERS = [
   { range: "$0 - $1,000", rate: "10%" },
   { range: "$1,000 - $6,000", rate: "15%" },
@@ -151,6 +153,12 @@ export default function HowItWorksPage() {
               </p>
             </div>
           </div>
+          <Link
+            href="/submit-design"
+            className="mt-5 inline-flex items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+          >
+            Submit Your Work
+          </Link>
         </section>
 
         <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 sm:p-6">
