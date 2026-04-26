@@ -12,6 +12,7 @@ export default function SubmitDesignPage() {
   const [description, setDescription] = useState("");
   const [category, setCategory] = useState<Category>("T-Shirts");
   const [agreementType, setAgreementType] = useState<AgreementType>("Royalty");
+  const [oneTimeOfferPrice, setOneTimeOfferPrice] = useState("");
   const [imageName, setImageName] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
@@ -113,6 +114,32 @@ export default function SubmitDesignPage() {
                 </p>
               )}
             </section>
+
+            {agreementType === "One-Time" && (
+              <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-emerald-300">Your one-time offer price (USD)</span>
+                  <input
+                    type="number"
+                    min="0"
+                    step="0.01"
+                    value={oneTimeOfferPrice}
+                    onChange={(e) => setOneTimeOfferPrice(e.target.value)}
+                    placeholder="Ex: 500.00"
+                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                  />
+                  <p className="text-xs text-zinc-300">
+                    You can name your offer, but final acceptance depends on artwork quality, audience pull, and brand fit.
+                  </p>
+                </label>
+                <p className="mt-3 text-xs leading-5 text-zinc-300">
+                  Leonardo da Vinci was one of history&apos;s greatest artists, yet he died poor partly because his era lacked
+                  modern networking and distribution. In today&apos;s market, both artwork quality and artist infamy influence
+                  whether Witness accepts your offer as-is or returns a counteroffer. Final payout is only completed after
+                  licensing and fee terms are reviewed and signed.
+                </p>
+              </section>
+            )}
 
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-emerald-300">Image upload</span>
