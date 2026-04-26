@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { ROYALTY_TIERS } from "@/lib/royalty-tiers";
 
 type Category = "T-Shirts" | "3D Prints";
@@ -138,6 +139,14 @@ export default function SubmitDesignPage() {
             <p className="text-sm font-semibold text-emerald-300">Submission received (mock)</p>
             <p className="mt-1 text-sm text-zinc-200">
               Your design has been queued with status <span className="font-semibold">pending</span>. You will see updates when moderation changes it to approved or rejected.
+            </p>
+            <p className="mt-3">
+              <Link
+                href="/submitted-designs"
+                className="inline-flex rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/30"
+              >
+                Go to submitted designs
+              </Link>
             </p>
           </section>
         )}

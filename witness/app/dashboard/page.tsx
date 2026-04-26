@@ -59,14 +59,26 @@ export default async function DashboardPage() {
             . Submissions and royalty tools will connect here as those features go live.
           </p>
           {meta?.role === "Creator" && (
-            <p className="mt-4">
+            <div className="mt-4 flex flex-wrap gap-3">
               <Link
                 href="/submit-design"
                 className="inline-flex rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
               >
                 Submit a design
               </Link>
-            </p>
+              <Link
+                href="/submitted-designs"
+                className="inline-flex rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                View submitted designs
+              </Link>
+              <Link
+                href="/profile"
+                className="inline-flex rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                Edit creator profile
+              </Link>
+            </div>
           )}
         </section>
 
@@ -74,6 +86,14 @@ export default async function DashboardPage() {
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
             <h2 className="text-lg font-semibold text-emerald-300">Submissions</h2>
             <p className="mt-2 text-sm text-zinc-300">Track pending, approved, and rejected design submissions.</p>
+            <p className="mt-4">
+              <Link
+                href="/submitted-designs"
+                className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                Open submissions
+              </Link>
+            </p>
           </article>
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
             <h2 className="text-lg font-semibold text-emerald-300">Royalty Tier</h2>
@@ -108,6 +128,20 @@ export default async function DashboardPage() {
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
             <h2 className="text-lg font-semibold text-emerald-300">Profile & Agreements</h2>
             <p className="mt-2 text-sm text-zinc-300">Manage creator profile, contract type, and payment preferences.</p>
+            <div className="mt-4 flex flex-wrap gap-2">
+              <Link
+                href="/profile"
+                className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                Profile
+              </Link>
+              <Link
+                href="/agreements"
+                className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                Agreements
+              </Link>
+            </div>
           </article>
         </section>
 
