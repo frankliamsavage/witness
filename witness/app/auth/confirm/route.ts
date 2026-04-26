@@ -10,13 +10,10 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
+  const code = searchParams.get("code");
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
   const next = searchParams.get("next") ?? "/dashboard";
-
-  if (!token_hash || !type) {
-    return NextResponse.redirect(new URL("/login?error=auth", request.url));
-  }
 
   const response = NextResponse.redirect(new URL(next, request.url));
 
@@ -34,10 +31,20 @@ export async function GET(request: NextRequest) {
     },
   });
 
-  const { error } = await supabase.auth.verifyOtp({
-    type,
-    token_hash,
-  });
+  let error: Error | null = null;
+
+  if (code) {
+    const result = await supabase.auth.exchangeCodeForSession(code);
+    error = result.error;
+  } else if (token_hash && type) {
+    const result = await supabase.auth.verifyOtp({
+      type,
+      token_hash,
+    });
+    error = result.error;
+  } else {
+    return NextResponse.redirect(new URL("/login?error=auth", request.url));
+  }
 
   if (error) {
     return NextResponse.redirect(new URL("/login?error=confirm", request.url));
