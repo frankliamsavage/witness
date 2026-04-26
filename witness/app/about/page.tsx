@@ -24,7 +24,7 @@ export default function AboutPage() {
             <h2 className="text-xl font-semibold text-emerald-300">Founder photo</h2>
             <div className="relative mt-4 aspect-video overflow-hidden rounded-xl border border-zinc-700 bg-zinc-950/90 p-1">
               <Image
-                src="/founders-frank-toni.png"
+                src="/founders-placeholder.svg"
                 alt="Frank and Toni, founders of Witness Project"
                 fill
                 className="object-contain"
@@ -32,6 +32,10 @@ export default function AboutPage() {
                 priority
               />
             </div>
+            <p className="mt-3 text-sm font-semibold text-zinc-100">Frank & Toni — Founders</p>
+            <p className="mt-1 text-xs text-zinc-400">
+              Replace this placeholder with the final founder photo before launch.
+            </p>
           </article>
 
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">

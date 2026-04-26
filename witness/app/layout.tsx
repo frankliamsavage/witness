@@ -37,10 +37,13 @@ export default async function RootLayout({
             <p>© {new Date().getFullYear()} Witness Project. Transparent capitalism in motion.</p>
             <div className="flex items-center gap-3">
               <Link href="/terms" className="transition-colors hover:text-emerald-300">
-                Terms
+                Terms of Service
               </Link>
               <Link href="/privacy" className="transition-colors hover:text-emerald-300">
-                Privacy
+                Privacy Policy
+              </Link>
+              <Link href="/contact" className="transition-colors hover:text-emerald-300">
+                Contact
               </Link>
             </div>
           </div>

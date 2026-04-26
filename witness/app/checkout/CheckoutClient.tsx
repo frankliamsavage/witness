@@ -11,8 +11,8 @@ export function CheckoutClient() {
     const product = searchParams.get("product") ?? "Selected product";
     const size = searchParams.get("size") ?? "M";
     const color = searchParams.get("color") ?? "Black";
-    const priceValue = Number(searchParams.get("price") ?? "18");
-    const price = Number.isFinite(priceValue) ? priceValue : 18;
+    const priceValue = Number(searchParams.get("price") ?? "15");
+    const price = Number.isFinite(priceValue) ? priceValue : 15;
     return { product, size, color, price };
   }, [searchParams]);
 
@@ -93,9 +93,11 @@ export function CheckoutClient() {
 
         {orderPlaced && (
           <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-            <p className="text-sm font-semibold text-emerald-300">Thank you for your order!</p>
+            <p className="text-sm font-semibold text-emerald-300">
+              Thank you! This is a demo. Orders coming soon.
+            </p>
             <p className="mt-1 text-sm text-zinc-100">
-              Your order request has been recorded. We&apos;ll confirm fulfillment details by email.
+              Your checkout details were captured for preview only. Live payments are not enabled yet.
             </p>
           </section>
         )}
