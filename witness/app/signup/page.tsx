@@ -9,6 +9,16 @@ import { getSupabasePublicConfig } from "@/lib/supabase/env";
 
 type Role = "Customer" | "Creator";
 
+function isScreenNameConflict(message: string) {
+  const normalized = message.toLowerCase();
+  return (
+    normalized.includes("screen_name") ||
+    normalized.includes("screen name") ||
+    normalized.includes("user_profiles_screen_name_normalized_key") ||
+    normalized.includes("duplicate key")
+  );
+}
+
 export default function SignupPage() {
   const router = useRouter();
   const [screenName, setScreenName] = useState("");
@@ -36,19 +46,37 @@ export default function SignupPage() {
     setLoading(true);
     try {
       const supabase = createClient();
+      const screenNameTrimmed = screenName.trim();
+
+      const { data: availableData, error: availableError } = await supabase.rpc(
+        "is_screen_name_available",
+        {
+          candidate_screen_name: screenNameTrimmed,
+        },
+      );
+
+      if (!availableError && availableData === false) {
+        setError("That screen name is already taken. Try another one.");
+        return;
+      }
+
       const { data, error: signErr } = await supabase.auth.signUp({
         email,
         password,
         options: {
           emailRedirectTo: `${window.location.origin}/auth/confirm`,
           data: {
-            screen_name: screenName.trim(),
+            screen_name: screenNameTrimmed,
             role,
           },
         },
       });
 
       if (signErr) {
+        if (isScreenNameConflict(signErr.message)) {
+          setError("That screen name is already taken. Try another one.");
+          return;
+        }
         setError(signErr.message);
         return;
       }

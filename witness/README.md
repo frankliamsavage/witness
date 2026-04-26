@@ -18,6 +18,14 @@ Open [http://localhost:3000](http://localhost:3000) with your browser to see the
 
 You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
 
+## Supabase setup note
+
+To enforce globally unique screen names (case-insensitive), run:
+
+- `supabase/screen-name-uniqueness.sql`
+
+in the Supabase SQL Editor for your project. This creates a profile table, unique index, and auth triggers used by signup.
+
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
 ## Learn More
