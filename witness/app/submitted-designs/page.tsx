@@ -6,23 +6,23 @@ const mockSubmissions = [
     title: "Transparent City Grid",
     status: "Approved",
     royaltyEarned: 124.5,
-    salesCount: 38,
-    agreement: "Royalty 5%",
+    salesDisplay: "38",
+    agreement: "Royalty scale",
   },
   {
     id: "WIT-1022",
     title: "Neon Faith Over Fear",
     status: "Pending",
     royaltyEarned: 0,
-    salesCount: 0,
-    agreement: "Royalty 5%",
+    salesDisplay: "0",
+    agreement: "Royalty scale",
   },
   {
     id: "WIT-0971",
     title: "Minimal Lion Crest",
     status: "Sold to Witness",
     royaltyEarned: 600,
-    salesCount: 0,
+    salesDisplay: "1/1",
     agreement: "One-Time Buyout",
   },
 ];
@@ -68,7 +68,7 @@ export default function SubmittedDesignsPage() {
                   <th className="px-3 py-2 font-semibold">Status</th>
                   <th className="px-3 py-2 font-semibold">Agreement</th>
                   <th className="px-3 py-2 font-semibold">Sales</th>
-                  <th className="px-3 py-2 font-semibold">Earnings</th>
+                  <th className="px-3 py-2 font-semibold">Earnings to date</th>
                 </tr>
               </thead>
               <tbody>
@@ -84,7 +84,7 @@ export default function SubmittedDesignsPage() {
                       </span>
                     </td>
                     <td className="px-3 py-3 text-zinc-300">{submission.agreement}</td>
-                    <td className="px-3 py-3 text-zinc-300">{submission.salesCount}</td>
+                    <td className="px-3 py-3 text-zinc-300">{submission.salesDisplay}</td>
                     <td className="px-3 py-3 text-zinc-100">${submission.royaltyEarned.toFixed(2)}</td>
                   </tr>
                 ))}
