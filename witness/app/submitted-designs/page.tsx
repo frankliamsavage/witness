@@ -1,4 +1,7 @@
 import Link from "next/link";
+import { createClient } from "@/lib/supabase/server";
+import { getSupabasePublicConfig } from "@/lib/supabase/env";
+import { productCatalog } from "@/lib/product-catalog";
 
 const submissions: Array<{
   id: string;
@@ -9,7 +12,29 @@ const submissions: Array<{
   agreement: string;
 }> = [];
 
-export default function SubmittedDesignsPage() {
+function normalizeIdentity(value: string | undefined | null): string {
+  return (value ?? "").toLowerCase().replace(/\s+/g, "");
+}
+
+export default async function SubmittedDesignsPage() {
+  let screenName = "";
+  let emailLocalPart = "";
+
+  if (getSupabasePublicConfig()) {
+    const supabase = await createClient();
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    screenName = normalizeIdentity(user?.user_metadata?.screen_name as string | undefined);
+    emailLocalPart = normalizeIdentity(user?.email?.split("@")[0]);
+  }
+
+  const officialItemsByCreator = productCatalog.filter((item) => {
+    if (item.contentType !== "official") return false;
+    const creator = normalizeIdentity(item.creator);
+    return Boolean((screenName && creator === screenName) || (emailLocalPart && creator === emailLocalPart));
+  });
+
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-16 sm:px-10 lg:px-16">
@@ -80,6 +105,42 @@ export default function SubmittedDesignsPage() {
                   ))}
                 </tbody>
               </table>
+            </div>
+          )}
+        </section>
+
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
+          <h2 className="text-xl font-semibold text-emerald-300">Official Witness Items by You</h2>
+          <p className="mt-2 text-sm text-zinc-300">
+            These are live official catalog products associated with your creator identity.
+          </p>
+          {officialItemsByCreator.length === 0 ? (
+            <div className="mt-5 rounded-xl border border-zinc-700 bg-zinc-950/80 p-5">
+              <p className="text-sm font-semibold text-zinc-100">No official items linked yet.</p>
+              <p className="mt-2 text-sm text-zinc-300">
+                Once official products are linked to your creator identity, they will appear here.
+              </p>
+            </div>
+          ) : (
+            <div className="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {officialItemsByCreator.map((item) => (
+                <article key={item.id} className="rounded-xl border border-zinc-700 bg-zinc-950/80 p-4">
+                  <p className="text-xs uppercase tracking-wide text-zinc-400">{item.category}</p>
+                  <h3 className="mt-1 text-base font-semibold text-zinc-100">{item.name}</h3>
+                  <p className="mt-2 text-sm text-zinc-300">
+                    Selling from <span className="font-semibold text-emerald-300">${item.fromPrice.toFixed(2)}</span>
+                  </p>
+                  <p className="mt-1 text-xs text-zinc-400">Status: Live official catalog</p>
+                  <p className="mt-3">
+                    <Link
+                      href="/products"
+                      className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                    >
+                      View in products
+                    </Link>
+                  </p>
+                </article>
+              ))}
             </div>
           )}
         </section>
