@@ -38,8 +38,6 @@ export default function ProductsPage() {
   const [selectedSizes, setSelectedSizes] = useState<Record<number, ProductSize>>({});
   const [selectedColors, setSelectedColors] = useState<Record<number, ProductColor>>({});
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
-  const [checkoutComplete, setCheckoutComplete] = useState(false);
 
   const filteredDesigns = useMemo(() => {
     if (selectedFilter === "All") return productCatalog.filter((design) => design.moderationStatus === "approved");
@@ -83,10 +81,6 @@ export default function ProductsPage() {
     const price = getVariantPrice(design.fromPrice, size, color);
     const nextItem: CartItem = { designId: design.id, name: design.name, size, color, price };
     setCartItems((prev) => [...prev, nextItem]);
-    if (buyNow) {
-      setIsCheckoutOpen(true);
-      setCheckoutComplete(false);
-    }
   };
 
   return (
@@ -241,13 +235,20 @@ export default function ProductsPage() {
                         >
                           Add to cart
                         </button>
-                        <button
-                          type="button"
-                          onClick={() => addToCart(design.id, true)}
+                        <Link
+                          href={`/checkout?product=${encodeURIComponent(design.name)}&size=${encodeURIComponent(
+                            getSelectedSize(design.id),
+                          )}&color=${encodeURIComponent(getSelectedColor(design.id))}&price=${encodeURIComponent(
+                            getVariantPrice(
+                              design.fromPrice,
+                              getSelectedSize(design.id),
+                              getSelectedColor(design.id),
+                            ).toFixed(2),
+                          )}`}
                           className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
                         >
                           Buy now
-                        </button>
+                        </Link>
                       </div>
                     </div>
                   </article>
@@ -317,8 +318,13 @@ export default function ProductsPage() {
                   <button
                     type="button"
                     onClick={() => {
-                      setIsCheckoutOpen(true);
-                      setCheckoutComplete(false);
+                      const firstItem = cartItems[0];
+                      if (!firstItem) return;
+                      window.location.href = `/checkout?product=${encodeURIComponent(
+                        firstItem.name,
+                      )}&size=${encodeURIComponent(firstItem.size)}&color=${encodeURIComponent(
+                        firstItem.color,
+                      )}&price=${encodeURIComponent(firstItem.price.toFixed(2))}`;
                     }}
                     className="mt-1 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
                   >
@@ -352,67 +358,6 @@ export default function ProductsPage() {
           </aside>
         </section>
 
-        {isCheckoutOpen && (
-          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
-            <h2 className="text-2xl font-semibold text-emerald-300">Checkout</h2>
-            <p className="mt-2 text-sm text-zinc-300">
-              Checkout experience is live and ready for Stripe session wiring.
-            </p>
-
-            <div className="mt-5 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
-              <div className="grid gap-4">
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-emerald-300">Email</span>
-                  <input
-                    type="email"
-                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
-                    placeholder="you@example.com"
-                  />
-                </label>
-                <label className="grid gap-2">
-                  <span className="text-sm font-semibold text-emerald-300">Shipping address</span>
-                  <input
-                    type="text"
-                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
-                    placeholder="Street, city, state, ZIP"
-                  />
-                </label>
-                <div className="rounded-xl border border-zinc-700 bg-zinc-950/80 p-4">
-                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Payment</p>
-                  <p className="mt-2 text-sm text-zinc-300">
-                    Stripe checkout slot is set and ready for secure payment session wiring.
-                  </p>
-                  <p className="mt-1 text-sm text-zinc-100">Powered by Stripe</p>
-                </div>
-              </div>
-
-              <div className="rounded-xl border border-zinc-700 bg-zinc-950/80 p-4">
-                <p className="text-sm font-semibold text-emerald-300">Order summary</p>
-                <p className="mt-2 text-sm text-zinc-300">
-                  T-shirts start at <span className="font-semibold text-zinc-100">$18.00</span>. Variant selections can
-                  increase price.
-                </p>
-                <p className="mt-4 text-sm text-zinc-300">
-                  Total: <span className="text-lg font-bold text-zinc-100">${cartSubtotal.toFixed(2)}</span>
-                </p>
-                <button
-                  type="button"
-                  onClick={() => setCheckoutComplete(true)}
-                  disabled={cartItems.length === 0}
-                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Place order
-                </button>
-              </div>
-            </div>
-
-            {checkoutComplete && (
-              <p className="mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
-                Order submitted. Next step is final Stripe Checkout session integration.
-              </p>
-            )}
-          </section>
-        )}
       </main>
     </div>
   );
