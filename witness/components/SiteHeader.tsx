@@ -22,10 +22,34 @@ export async function SiteHeader() {
 
         <nav className="flex flex-wrap items-center justify-end gap-2 sm:gap-3">
           <Link
+            href="/"
+            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+          >
+            Home
+          </Link>
+          <Link
             href="/products"
             className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
           >
             Products
+          </Link>
+          <Link
+            href="/how-it-works"
+            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+          >
+            How It Works
+          </Link>
+          <Link
+            href="/about"
+            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+          >
+            About
+          </Link>
+          <Link
+            href="/contact"
+            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+          >
+            Contact
           </Link>
           <Link
             href="/dashboard"

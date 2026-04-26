@@ -7,15 +7,70 @@ import { mockDesigns } from "@/lib/mock-designs";
 
 const filters = ["All", "T-Shirts", "3D Prints", "New Arrivals"] as const;
 type FilterOption = (typeof filters)[number];
+type ProductSize = "S" | "M" | "L" | "XL" | "XXL";
+type ProductColor = "Black" | "White" | "Emerald" | "Charcoal";
+
+const SIZE_ADJUSTMENTS: Record<ProductSize, number> = {
+  S: 0,
+  M: 0,
+  L: 1,
+  XL: 2,
+  XXL: 3,
+};
+
+const COLOR_ADJUSTMENTS: Record<ProductColor, number> = {
+  Black: 0,
+  White: 0,
+  Emerald: 1,
+  Charcoal: 1,
+};
+
+type CartItem = {
+  designId: number;
+  name: string;
+  size: ProductSize;
+  color: ProductColor;
+  price: number;
+};
 
 export default function ProductsPage() {
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>("All");
+  const [selectedSizes, setSelectedSizes] = useState<Record<number, ProductSize>>({});
+  const [selectedColors, setSelectedColors] = useState<Record<number, ProductColor>>({});
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [checkoutComplete, setCheckoutComplete] = useState(false);
 
   const filteredDesigns = useMemo(() => {
     if (selectedFilter === "All") return mockDesigns.filter((design) => design.moderationStatus === "approved");
     if (selectedFilter === "New Arrivals") return [];
     return mockDesigns.filter((design) => design.category === selectedFilter);
   }, [selectedFilter]);
+
+  const cartSubtotal = useMemo(
+    () => cartItems.reduce((sum, item) => sum + item.price, 0),
+    [cartItems],
+  );
+
+  const getSelectedSize = (designId: number): ProductSize => selectedSizes[designId] ?? "M";
+  const getSelectedColor = (designId: number): ProductColor => selectedColors[designId] ?? "Black";
+
+  const getVariantPrice = (fromPrice: number, size: ProductSize, color: ProductColor) =>
+    fromPrice + SIZE_ADJUSTMENTS[size] + COLOR_ADJUSTMENTS[color];
+
+  const addToCart = (designId: number, buyNow?: boolean) => {
+    const design = filteredDesigns.find((item) => item.id === designId);
+    if (!design) return;
+    const size = getSelectedSize(designId);
+    const color = getSelectedColor(designId);
+    const price = getVariantPrice(design.fromPrice, size, color);
+    const nextItem: CartItem = { designId: design.id, name: design.name, size, color, price };
+    setCartItems((prev) => [...prev, nextItem]);
+    if (buyNow) {
+      setIsCheckoutOpen(true);
+      setCheckoutComplete(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -105,12 +160,74 @@ export default function ProductsPage() {
                       )}
                     </div>
 
-                    <button
-                      type="button"
-                      className="mt-4 w-full rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
-                    >
-                      Select Design
-                    </button>
+                    <div className="mt-4 grid gap-3">
+                      <div className="grid grid-cols-2 gap-2">
+                        <label className="grid gap-1">
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Size</span>
+                          <select
+                            value={getSelectedSize(design.id)}
+                            onChange={(e) =>
+                              setSelectedSizes((prev) => ({ ...prev, [design.id]: e.target.value as ProductSize }))
+                            }
+                            className="rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                          >
+                            {Object.keys(SIZE_ADJUSTMENTS).map((size) => (
+                              <option key={size} value={size}>
+                                {size}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <label className="grid gap-1">
+                          <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Color</span>
+                          <select
+                            value={getSelectedColor(design.id)}
+                            onChange={(e) =>
+                              setSelectedColors((prev) => ({
+                                ...prev,
+                                [design.id]: e.target.value as ProductColor,
+                              }))
+                            }
+                            className="rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                          >
+                            {Object.keys(COLOR_ADJUSTMENTS).map((color) => (
+                              <option key={color} value={color}>
+                                {color}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      </div>
+
+                      <p className="text-xs text-zinc-400">
+                        Variant price:{" "}
+                        <span className="font-semibold text-emerald-300">
+                          $
+                          {getVariantPrice(
+                            design.fromPrice,
+                            getSelectedSize(design.id),
+                            getSelectedColor(design.id),
+                          ).toFixed(2)}
+                        </span>
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-2">
+                        <button
+                          type="button"
+                          onClick={() => addToCart(design.id)}
+                          className="rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                        >
+                          Add to cart
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => addToCart(design.id, true)}
+                          className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                        >
+                          Buy now
+                        </button>
+                      </div>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -120,7 +237,7 @@ export default function ProductsPage() {
                 {selectedFilter === "New Arrivals" ? (
                   <>
                     <p className="mt-2 text-sm text-zinc-300">
-                      New Arrivals is for user-submitted content. No public submissions are live yet.
+                      Be the first to submit! New Arrivals is waiting for approved community designs.
                     </p>
                     <p className="mt-2 text-sm text-zinc-400">
                       Once accounts are live, creators with royalty agreements will monitor sales and payouts from their dashboard.
@@ -131,46 +248,145 @@ export default function ProductsPage() {
                     No products now, submit design today.
                   </p>
                 )}
-                <button
-                  type="button"
-                  className="mt-4 rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                <Link
+                  href="/submit-design"
+                  className="mt-4 inline-flex rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
                 >
                   Submit Design
-                </button>
+                </Link>
                 {selectedFilter === "New Arrivals" && (
                   <Link
-                    href="/dashboard"
+                    href="/submit-design"
                     className="ml-3 inline-flex rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
                   >
-                    Open Dashboard (Preview)
+                    Go submit now
                   </Link>
                 )}
               </div>
             )}
           </div>
 
-          <aside className="h-fit rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
-            <h3 className="text-xl font-semibold text-emerald-300">How It Works</h3>
-            <p className="mt-3 text-sm leading-6 text-zinc-300">
-              See exactly how each product price is built, from base production cost to operating margin and creator royalties.
-            </p>
-            <Link
-              href="/how-it-works"
-              className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
-            >
-              View Pricing Breakdown
-            </Link>
-            <Link
-              href="/submit-design"
-              className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
-            >
-              Submit a Design
-            </Link>
-            <p className="mt-4 text-xs text-zinc-400">
-              Choosing a design here is step one. Product options and customization can be selected next.
-            </p>
+          <aside className="h-fit space-y-4">
+            <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+              <h3 className="text-xl font-semibold text-emerald-300">Cart</h3>
+              <p className="mt-2 text-sm text-zinc-300">
+                {cartItems.length === 0
+                  ? "Your cart is empty. Add a design to start checkout."
+                  : `${cartItems.length} item${cartItems.length === 1 ? "" : "s"} in cart`}
+              </p>
+              {cartItems.length > 0 && (
+                <div className="mt-4 space-y-2">
+                  {cartItems.map((item, idx) => (
+                    <div key={`${item.designId}-${idx}`} className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-2">
+                      <p className="text-xs font-semibold text-zinc-100">{item.name}</p>
+                      <p className="text-[11px] text-zinc-400">
+                        {item.size} · {item.color}
+                      </p>
+                      <p className="text-xs font-semibold text-emerald-300">${item.price.toFixed(2)}</p>
+                    </div>
+                  ))}
+                  <p className="pt-1 text-sm text-zinc-300">
+                    Subtotal: <span className="font-semibold text-zinc-100">${cartSubtotal.toFixed(2)}</span>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsCheckoutOpen(true);
+                      setCheckoutComplete(false);
+                    }}
+                    className="mt-1 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                  >
+                    Go to checkout
+                  </button>
+                </div>
+              )}
+            </section>
+
+            <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+              <h3 className="text-xl font-semibold text-emerald-300">How It Works</h3>
+              <p className="mt-3 text-sm leading-6 text-zinc-300">
+                See exactly how each product price is built, from base production cost to operating margin and creator royalties.
+              </p>
+              <Link
+                href="/how-it-works"
+                className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+              >
+                View Pricing Breakdown
+              </Link>
+              <Link
+                href="/submit-design"
+                className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                Submit a Design
+              </Link>
+              <p className="mt-4 text-xs text-zinc-400">
+                Choosing a design here is step one. Product options and customization can be selected next.
+              </p>
+            </section>
           </aside>
         </section>
+
+        {isCheckoutOpen && (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
+            <h2 className="text-2xl font-semibold text-emerald-300">Checkout</h2>
+            <p className="mt-2 text-sm text-zinc-300">
+              Payment UI flow is launch-ready. Stripe processing can be connected next without changing the design.
+            </p>
+
+            <div className="mt-5 grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+              <div className="grid gap-4">
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-emerald-300">Email</span>
+                  <input
+                    type="email"
+                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                    placeholder="you@example.com"
+                  />
+                </label>
+                <label className="grid gap-2">
+                  <span className="text-sm font-semibold text-emerald-300">Shipping address</span>
+                  <input
+                    type="text"
+                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                    placeholder="Street, city, state, ZIP"
+                  />
+                </label>
+                <div className="rounded-xl border border-zinc-700 bg-zinc-950/80 p-4">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Payment</p>
+                  <p className="mt-2 text-sm text-zinc-300">
+                    Stripe checkout integration placeholder. No live charges are processed yet.
+                  </p>
+                  <p className="mt-1 text-sm text-zinc-100">Powered by Stripe (UI only)</p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-zinc-700 bg-zinc-950/80 p-4">
+                <p className="text-sm font-semibold text-emerald-300">Order summary</p>
+                <p className="mt-2 text-sm text-zinc-300">
+                  T-shirts start at <span className="font-semibold text-zinc-100">$18.00</span>. Variant selections can
+                  increase price.
+                </p>
+                <p className="mt-4 text-sm text-zinc-300">
+                  Total: <span className="text-lg font-bold text-zinc-100">${cartSubtotal.toFixed(2)}</span>
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setCheckoutComplete(true)}
+                  disabled={cartItems.length === 0}
+                  className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Place order (demo)
+                </button>
+              </div>
+            </div>
+
+            {checkoutComplete && (
+              <p className="mt-5 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-3 text-sm text-emerald-100">
+                Demo order placed. Next step is wiring this button to Stripe Checkout session creation.
+              </p>
+            )}
+          </section>
+        )}
       </main>
     </div>
   );
