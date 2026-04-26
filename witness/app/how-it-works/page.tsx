@@ -1,4 +1,10 @@
-import { ROYALTY_TIERS } from "@/lib/royalty-tiers";
+const REVENUE_ROYALTY_TIERS = [
+  { range: "$0 - $1,000", rate: "10%" },
+  { range: "$1,000 - $6,000", rate: "15%" },
+  { range: "$6,000 - $12,000", rate: "20%" },
+  { range: "$12,000 - $100,000", rate: "25%" },
+  { range: "$100,000+", rate: "30%" },
+];
 
 export default function HowItWorksPage() {
   return (
@@ -43,31 +49,35 @@ export default function HowItWorksPage() {
 
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
             <h2 className="text-2xl font-semibold text-emerald-300">Example breakdown</h2>
-            <p className="mt-2 text-sm text-zinc-400">Example: $18.00 t-shirt</p>
+            <p className="mt-2 text-sm text-zinc-400">Example: $15.00 retail t-shirt</p>
 
             <div className="mt-6 space-y-4">
               <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">
-                    Base Production Cost (64%)
+                    Total Base Cost (59.7%)
                   </p>
-                  <p className="text-sm font-semibold text-zinc-100">$11.50</p>
+                  <p className="text-sm font-semibold text-zinc-100">$8.95</p>
                 </div>
                 <div className="mt-3 h-2 w-full rounded-full bg-zinc-800">
-                  <div className="h-2 rounded-full bg-emerald-500/80" style={{ width: "64%" }} />
+                  <div className="h-2 rounded-full bg-emerald-500/80" style={{ width: "59.7%" }} />
                 </div>
                 <div className="mt-4 space-y-2 text-sm text-zinc-300">
                   <div className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2">
-                    <span>Blank shirt</span>
-                    <span className="font-semibold text-zinc-100">$9.00 (50%)</span>
+                    <span>Blank (with 20% markup)</span>
+                    <span className="font-semibold text-zinc-100">$5.75</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2">
+                    <span>Ink & Supplies</span>
+                    <span className="font-semibold text-zinc-100">$0.60</span>
+                  </div>
+                  <div className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2">
+                    <span>Machine Cost (recoup)</span>
+                    <span className="font-semibold text-zinc-100">$0.60</span>
                   </div>
                   <div className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2">
                     <span>Labor</span>
-                    <span className="font-semibold text-zinc-100">$1.00 (5.5%)</span>
-                  </div>
-                  <div className="flex items-center justify-between rounded-md border border-zinc-800 bg-zinc-900/60 px-3 py-2">
-                    <span>Supplies</span>
-                    <span className="font-semibold text-zinc-100">$1.50 (8.3%)</span>
+                    <span className="font-semibold text-zinc-100">$2.00</span>
                   </div>
                 </div>
               </div>
@@ -75,25 +85,27 @@ export default function HowItWorksPage() {
               <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
                 <div className="flex items-center justify-between">
                   <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">
-                    Platform / Operating Margin (36%)
+                    Platform Margin (33.3%)
                   </p>
-                  <p className="text-sm font-semibold text-zinc-100">$6.50</p>
+                  <p className="text-sm font-semibold text-zinc-100">$5.00</p>
                 </div>
                 <div className="mt-3 h-2 w-full rounded-full bg-zinc-800">
-                  <div className="h-2 rounded-full bg-emerald-400/65" style={{ width: "36%" }} />
+                  <div className="h-2 rounded-full bg-emerald-400/65" style={{ width: "33.3%" }} />
                 </div>
                 <p className="mt-3 text-sm text-zinc-300">
-                  Covers operations, payment fees, replacements, and growth.
+                  Built into the $15 retail price to cover operations, risk, and profit.
                 </p>
               </div>
             </div>
 
             <div className="mt-6 rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-4">
               <div className="flex items-center justify-between">
-                <span className="text-base font-semibold text-emerald-300">Total</span>
-                <span className="text-3xl font-bold text-zinc-50">$18.00+</span>
+                <span className="text-base font-semibold text-emerald-300">Retail Price</span>
+                <span className="text-3xl font-bold text-zinc-50">$15.00</span>
               </div>
-              <p className="mt-2 text-sm text-zinc-300">Final customer price depends on royalty agreement terms.</p>
+              <p className="mt-2 text-sm text-zinc-300">
+                At max 30% royalty, creator gets $4.50 and Witness keeps $1.55+ profit.
+              </p>
             </div>
           </article>
         </section>
@@ -101,22 +113,23 @@ export default function HowItWorksPage() {
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
           <h2 className="text-2xl font-semibold text-emerald-300">Tiered Royalty System</h2>
           <p className="mt-3 max-w-4xl text-sm leading-7 text-zinc-300">
-            Royalty creators start at 5% and unlock higher rates as lifetime sales increase. Growth is automatic.
+            Royalty is based on each creator&apos;s total gross revenue and uses progressive tiers (each rate applies only
+            to revenue inside that range).
           </p>
-          <div className="mt-5 grid gap-4 sm:grid-cols-3">
-            {ROYALTY_TIERS.map((tier) => (
-              <div key={tier.name} className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
-                <p className="text-base font-semibold text-emerald-300">
-                  {tier.ratePercent}% · {tier.name}
-                </p>
-                <p className="mt-2 text-sm text-zinc-300">
-                  {tier.maxSales === null
-                    ? `${tier.minSales}+ total sales`
-                    : `${tier.minSales}-${tier.maxSales} total sales`}
-                </p>
+          <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
+            {REVENUE_ROYALTY_TIERS.map((tier) => (
+              <div key={`${tier.range}-${tier.rate}`} className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
+                <p className="text-lg font-bold text-emerald-300">{tier.rate}</p>
+                <p className="mt-1 text-xs uppercase tracking-wide text-zinc-400">Revenue Tier</p>
+                <p className="mt-2 text-sm text-zinc-300">{tier.range}</p>
               </div>
             ))}
           </div>
+          <ul className="mt-5 space-y-2 text-sm text-zinc-300">
+            <li>At $15 retail, max 30% royalty pays creator $4.50 per unit.</li>
+            <li>At that same top tier, Witness retains $1.55+ profit after base cost and royalty.</li>
+            <li>Progressive means higher rates apply only to the revenue inside each tier band.</li>
+          </ul>
         </section>
 
         <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
