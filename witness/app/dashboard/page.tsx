@@ -197,13 +197,21 @@ export default async function DashboardPage() {
           </article>
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
             <h2 className="text-lg font-semibold text-emerald-300">Profile & Agreements</h2>
-            <p className="mt-2 text-sm text-zinc-300">Manage creator profile, contract type, and payment preferences.</p>
+            <p className="mt-2 text-sm text-zinc-300">
+              Manage creator profile, shipping details, contract type, and payment preferences.
+            </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Link
                 href="/profile"
                 className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
               >
                 Profile
+              </Link>
+              <Link
+                href="/account/shipping"
+                className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                Shipping Info
               </Link>
               <Link
                 href="/agreements"

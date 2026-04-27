@@ -103,6 +103,13 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
             }}
           >
             <h2 className="text-xl font-semibold text-emerald-300">Customer info</h2>
+            <p className="mt-2 text-xs text-zinc-400">
+              Need to update your saved shipping details?{" "}
+              <Link href="/account/shipping" className="font-semibold text-emerald-300 hover:underline">
+                Edit shipping info
+              </Link>
+              .
+            </p>
             <div className="mt-4 grid gap-4">
               <label className="grid gap-2">
                 <span className="text-sm font-semibold text-emerald-300">Name</span>
