@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
@@ -11,6 +12,11 @@ const submissions: Array<{
   salesDisplay: string;
   agreement: string;
 }> = [];
+
+export const metadata: Metadata = {
+  title: "Submitted Designs",
+  description: "Track creator design submissions, statuses, and earnings in Witness.",
+};
 
 function normalizeIdentity(value: string | undefined | null): string {
   return (value ?? "").toLowerCase().replace(/\s+/g, "");

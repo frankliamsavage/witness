@@ -1,0 +1,16 @@
+{
+  "name": "Witness Project",
+  "short_name": "Witness",
+  "description": "Transparent products, pricing, and creator participation.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0a0a0a",
+  "theme_color": "#0a0a0a",
+  "icons": [
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ]
+}

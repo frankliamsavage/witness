@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SupabaseMissingConfigNotice } from "@/components/SupabaseMissingConfigNotice";
@@ -5,6 +6,10 @@ import { createClient } from "@/lib/supabase/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 
 export const dynamic = "force-dynamic";
+export const metadata: Metadata = {
+  title: "Dashboard",
+  description: "Creator dashboard for submissions, royalty tiers, and account tools.",
+};
 
 type UserMeta = {
   screen_name?: string;

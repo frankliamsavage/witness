@@ -16,7 +16,10 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Witness",
+  title: {
+    default: "Witness",
+    template: "%s | Witness",
+  },
   description: "Witness - Transparent products, pricing, and creator participation.",
 };
 

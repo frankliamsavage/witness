@@ -1,5 +1,11 @@
+import type { Metadata } from "next";
 import { Suspense } from "react";
 import { CheckoutClient } from "./CheckoutClient";
+
+export const metadata: Metadata = {
+  title: "Checkout",
+  description: "Review your cart and complete checkout on Witness.",
+};
 
 export default function CheckoutPage() {
   return (

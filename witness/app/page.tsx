@@ -1,4 +1,10 @@
+import type { Metadata } from "next";
 import Link from "next/link";
+
+export const metadata: Metadata = {
+  title: "Home",
+  description: "Witness Project home - transparent capitalism, open pricing, and creator participation.",
+};
 
 export default function Home() {
   return (

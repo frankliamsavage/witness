@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 const REVENUE_ROYALTY_TIERS = [
@@ -7,6 +8,11 @@ const REVENUE_ROYALTY_TIERS = [
   { range: "$12,000 - $100,000", rate: "25%" },
   { range: "$100,000+", rate: "30%" },
 ];
+
+export const metadata: Metadata = {
+  title: "How It Works",
+  description: "See exactly how Witness product pricing and creator royalty tiers are calculated.",
+};
 
 export default function HowItWorksPage() {
   return (

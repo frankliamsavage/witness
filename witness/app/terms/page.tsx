@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Terms of Service",
+  description: "Read the Witness Project Terms of Service.",
+};
+
 export default function TermsPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">

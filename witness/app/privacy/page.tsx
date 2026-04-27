@@ -1,3 +1,10 @@
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+  title: "Privacy Policy",
+  description: "Read the Witness Project Privacy Policy in plain language.",
+};
+
 export default function PrivacyPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">

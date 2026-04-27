@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 
 const REVENUE_ROYALTY_TIERS = [
@@ -7,6 +8,11 @@ const REVENUE_ROYALTY_TIERS = [
   { name: "Pro", ratePercent: 25, range: "$12,000 - $100,000" },
   { name: "Elite", ratePercent: 30, range: "$100,000+" },
 ];
+
+export const metadata: Metadata = {
+  title: "Agreements",
+  description: "Compare Witness royalty and one-time creator agreement options.",
+};
 
 export default function AgreementsPage() {
   return (
