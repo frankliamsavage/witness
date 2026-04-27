@@ -6,7 +6,7 @@ import { useCart } from "@/components/cart/CartContext";
 
 export default function CartPage() {
   const { items, subtotal, updateQuantity, removeFromCart, clearCart, itemCount } = useCart();
-  const liveCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT === "true";
+  const liveCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT !== "false";
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">

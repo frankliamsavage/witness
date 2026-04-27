@@ -22,11 +22,11 @@ type CheckoutPayload = {
 export async function POST(request: Request) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
-  const liveEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT === "true";
+  const liveEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT !== "false";
 
   if (!liveEnabled || !stripeSecretKey) {
     return NextResponse.json(
-      { ok: false, error: "Live checkout is not enabled." },
+      { ok: false, error: "Live checkout is not enabled or Stripe key is missing." },
       { status: 503 },
     );
   }

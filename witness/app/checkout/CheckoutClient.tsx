@@ -10,7 +10,7 @@ export function CheckoutClient() {
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const liveCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT === "true";
+  const liveCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT !== "false";
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
