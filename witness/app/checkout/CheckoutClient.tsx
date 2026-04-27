@@ -5,7 +5,16 @@ import Link from "next/link";
 import { useState } from "react";
 import { useCart } from "@/components/cart/CartContext";
 
-export function CheckoutClient() {
+type InitialCustomer = {
+  name: string;
+  email: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+};
+
+export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCustomer }) {
   const { items, subtotal, clearCart } = useCart();
   const [orderPlaced, setOrderPlaced] = useState(false);
   const [processingPayment, setProcessingPayment] = useState(false);
@@ -101,6 +110,7 @@ export function CheckoutClient() {
                   required
                   type="text"
                   name="name"
+                  defaultValue={initialCustomer.name}
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                   placeholder="Your full name"
                 />
@@ -111,6 +121,7 @@ export function CheckoutClient() {
                   required
                   type="email"
                   name="email"
+                  defaultValue={initialCustomer.email}
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                   placeholder="you@example.com"
                 />
@@ -120,6 +131,7 @@ export function CheckoutClient() {
                 <textarea
                   required
                   name="address"
+                  defaultValue={initialCustomer.address}
                   rows={3}
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                   placeholder="Street and apartment/unit"
@@ -132,6 +144,7 @@ export function CheckoutClient() {
                     required
                     type="text"
                     name="city"
+                    defaultValue={initialCustomer.city}
                     className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="City"
                   />
@@ -142,6 +155,7 @@ export function CheckoutClient() {
                     required
                     type="text"
                     name="state"
+                    defaultValue={initialCustomer.state}
                     className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="State"
                   />
@@ -152,6 +166,7 @@ export function CheckoutClient() {
                     required
                     type="text"
                     name="zip"
+                    defaultValue={initialCustomer.zip}
                     className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="ZIP"
                   />
