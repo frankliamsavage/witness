@@ -4,15 +4,15 @@ import Image from "next/image";
 export default function AboutPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <main className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-6 py-16 sm:px-10 lg:px-16">
-        <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-8 shadow-2xl shadow-emerald-500/10 sm:p-12">
+      <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:gap-10 sm:px-8 sm:py-16 lg:px-16">
+        <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-6 shadow-2xl shadow-emerald-500/10 sm:p-12">
           <p className="mb-4 inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
             About Witness Project
           </p>
-          <h1 className="max-w-4xl text-3xl font-bold leading-tight text-zinc-50 sm:text-4xl">
+          <h1 className="max-w-4xl text-2xl font-bold leading-tight text-zinc-50 sm:text-4xl">
             Built by Frank Savage to challenge corporate greed with transparent capitalism.
           </h1>
-          <p className="mt-5 max-w-3xl text-base leading-7 text-zinc-300 sm:text-lg">
+          <p className="mt-4 max-w-3xl text-sm leading-6 text-zinc-300 sm:mt-5 sm:text-lg sm:leading-7">
             Witness Project is personal. It started as a response to systems that hide margins, exploit creators, and
             leave communities in the dark. This platform exists to make the economics visible and keep people, not
             corporations, at the center.

@@ -9,12 +9,12 @@ export default function CartPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-6 py-16 sm:px-10 lg:px-16">
-        <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-8 shadow-2xl shadow-emerald-500/10 sm:p-12">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:px-8 sm:py-16 lg:px-16">
+        <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-6 shadow-2xl shadow-emerald-500/10 sm:p-12">
           <p className="mb-4 inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
             Cart
           </p>
-          <h1 className="text-3xl font-bold leading-tight text-zinc-50 sm:text-4xl">Your Shopping Cart</h1>
+          <h1 className="text-2xl font-bold leading-tight text-zinc-50 sm:text-4xl">Your Shopping Cart</h1>
           <p className="mt-3 text-sm text-zinc-300">
             {itemCount === 0
               ? "Your cart is currently empty."
@@ -56,11 +56,11 @@ export default function CartPage() {
                         </span>
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity - 1)}
-                        className="rounded-lg border border-zinc-700 px-2 py-1 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                        className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-1 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
                       >
                         -
                       </button>
@@ -68,14 +68,14 @@ export default function CartPage() {
                       <button
                         type="button"
                         onClick={() => updateQuantity(item.id, item.quantity + 1)}
-                        className="rounded-lg border border-zinc-700 px-2 py-1 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                        className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-1 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
                       >
                         +
                       </button>
                       <button
                         type="button"
                         onClick={() => removeFromCart(item.id)}
-                        className="ml-2 rounded-lg border border-zinc-700 px-2 py-1 text-xs font-semibold text-zinc-300 transition-colors hover:border-red-500/40 hover:text-red-300"
+                        className="mobile-touch-target ml-0 rounded-lg border border-zinc-700 px-3 py-1 text-sm font-semibold text-zinc-300 transition-colors hover:border-red-500/40 hover:text-red-300 sm:ml-2"
                       >
                         Remove
                       </button>
@@ -93,14 +93,14 @@ export default function CartPage() {
               <p className="mt-1 text-xs text-zinc-400">Shipping and tax are calculated at final checkout.</p>
               <Link
                 href="/checkout"
-                className="mt-4 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                className="mobile-touch-target mt-4 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
               >
                 Checkout
               </Link>
               <button
                 type="button"
                 onClick={clearCart}
-                className="mt-3 inline-flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                className="mobile-touch-target mt-3 inline-flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
               >
                 Clear Cart
               </button>

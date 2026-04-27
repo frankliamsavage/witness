@@ -91,13 +91,13 @@ export default function ProductsPage() {
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
-      <main className="mx-auto flex w-full max-w-7xl flex-col gap-10 px-6 py-16 sm:px-10 lg:px-16">
-        <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-8 shadow-2xl shadow-emerald-500/10 sm:p-12">
+      <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:gap-10 sm:px-8 sm:py-16 lg:px-16">
+        <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-6 shadow-2xl shadow-emerald-500/10 sm:p-12">
           <p className="mb-4 inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
             Products
           </p>
-          <h1 className="text-3xl font-bold leading-tight text-zinc-50 sm:text-4xl">Browse Designs</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-zinc-300 sm:text-lg">
+          <h1 className="text-2xl font-bold leading-tight text-zinc-50 sm:text-4xl">Browse Designs</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-zinc-300 sm:text-lg sm:leading-7">
             Pick a design to create your custom product.
           </p>
         </section>
@@ -155,7 +155,7 @@ export default function ProductsPage() {
             )}
 
             {filteredDesigns.length > 0 ? (
-              <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                 {filteredDesigns.map((design) => (
                   <article
                     key={design.id}
@@ -207,7 +207,7 @@ export default function ProductsPage() {
                     </div>
 
                     <div className="mt-4 grid gap-3">
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <label className="grid gap-1">
                           <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Size</span>
                           <select
@@ -257,17 +257,17 @@ export default function ProductsPage() {
                         </span>
                       </p>
 
-                      <div className="grid grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <button
                           type="button"
                           onClick={() => handleAddToCart(design.id)}
-                          className="rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                          className="mobile-touch-target rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
                         >
                           Add to Cart
                         </button>
                         <Link
                           href="/cart"
-                          className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                          className="mobile-touch-target rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-center text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
                         >
                           View Cart
                         </Link>
@@ -302,14 +302,14 @@ export default function ProductsPage() {
                 )}
                 <Link
                   href="/submit-design"
-                  className="mt-4 inline-flex rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                  className="mobile-touch-target mt-4 inline-flex w-full rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-center text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 sm:w-auto"
                 >
                   Submit Design
                 </Link>
                 {(selectedFilter === "Creator Profiles" || selectedFilter === "Rights Acquired") && (
                   <Link
                     href="/submit-design"
-                    className="ml-3 inline-flex rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                    className="mobile-touch-target mt-3 inline-flex w-full rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 text-center text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300 sm:ml-3 sm:mt-0 sm:w-auto"
                   >
                     Be first to submit
                   </Link>
