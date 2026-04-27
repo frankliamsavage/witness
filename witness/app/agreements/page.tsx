@@ -1,5 +1,12 @@
 import Link from "next/link";
-import { ROYALTY_TIERS } from "@/lib/royalty-tiers";
+
+const REVENUE_ROYALTY_TIERS = [
+  { name: "Launch", ratePercent: 10, range: "$0 - $1,000" },
+  { name: "Growth", ratePercent: 15, range: "$1,000 - $6,000" },
+  { name: "Scale", ratePercent: 20, range: "$6,000 - $12,000" },
+  { name: "Pro", ratePercent: 25, range: "$12,000 - $100,000" },
+  { name: "Elite", ratePercent: 30, range: "$100,000+" },
+];
 
 export default function AgreementsPage() {
   return (
@@ -19,22 +26,22 @@ export default function AgreementsPage() {
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
             <h2 className="text-xl font-semibold text-emerald-300">Royalty agreement</h2>
             <p className="mt-2 text-sm text-zinc-300">
-              Earn recurring payouts tied to product performance, with automatic tier upgrades as sales grow.
+              Earn recurring payouts tied to product performance, with automatic progressive tier upgrades as revenue
+              grows.
             </p>
             <div className="mt-4 grid gap-2">
-              {ROYALTY_TIERS.map((tier) => (
+              {REVENUE_ROYALTY_TIERS.map((tier) => (
                 <div key={tier.name} className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-3">
                   <p className="text-sm font-semibold text-zinc-100">
                     {tier.ratePercent}% · {tier.name}
                   </p>
-                  <p className="mt-1 text-xs text-zinc-300">
-                    {tier.maxSales === null
-                      ? `${tier.minSales}+ total sales`
-                      : `${tier.minSales}-${tier.maxSales} total sales`}
-                  </p>
+                  <p className="mt-1 text-xs text-zinc-300">{tier.range} gross revenue</p>
                 </div>
               ))}
             </div>
+            <p className="mt-3 text-xs text-zinc-400">
+              Progressive means each rate applies only to revenue earned inside that tier range.
+            </p>
           </article>
 
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
