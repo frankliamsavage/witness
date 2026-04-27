@@ -34,7 +34,28 @@ export default function CartPage() {
           </section>
         ) : (
           <section className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
-            <div className="space-y-4">
+            <aside className="order-1 h-fit rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 lg:order-2">
+              <h2 className="text-xl font-semibold text-emerald-300">Order Summary</h2>
+              <p className="mt-3 text-sm text-zinc-300">
+                Subtotal: <span className="font-semibold text-zinc-100">${subtotal.toFixed(2)}</span>
+              </p>
+              <p className="mt-1 text-xs text-zinc-400">Shipping and tax are calculated at final checkout.</p>
+              <Link
+                href="/checkout"
+                className="mobile-touch-target mt-4 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+              >
+                Checkout
+              </Link>
+              <button
+                type="button"
+                onClick={clearCart}
+                className="mobile-touch-target mt-3 inline-flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                Clear Cart
+              </button>
+            </aside>
+
+            <div className="order-2 space-y-4 lg:order-1">
               {items.map((item) => (
                 <article
                   key={item.id}
@@ -84,27 +105,6 @@ export default function CartPage() {
                 </article>
               ))}
             </div>
-
-            <aside className="h-fit rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
-              <h2 className="text-xl font-semibold text-emerald-300">Order Summary</h2>
-              <p className="mt-3 text-sm text-zinc-300">
-                Subtotal: <span className="font-semibold text-zinc-100">${subtotal.toFixed(2)}</span>
-              </p>
-              <p className="mt-1 text-xs text-zinc-400">Shipping and tax are calculated at final checkout.</p>
-              <Link
-                href="/checkout"
-                className="mobile-touch-target mt-4 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
-              >
-                Checkout
-              </Link>
-              <button
-                type="button"
-                onClick={clearCart}
-                className="mobile-touch-target mt-3 inline-flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2.5 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
-              >
-                Clear Cart
-              </button>
-            </aside>
           </section>
         )}
       </main>

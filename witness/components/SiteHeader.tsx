@@ -91,10 +91,12 @@ export async function SiteHeader() {
           )}
         </nav>
 
-        <details className="relative md:hidden">
-          <summary className="mobile-touch-target cursor-pointer list-none rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300">
-            Menu
-          </summary>
+        <div className="flex items-center gap-2 md:hidden">
+          <CartNavLink compact />
+          <details className="relative">
+            <summary className="mobile-touch-target cursor-pointer list-none rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300">
+              Menu
+            </summary>
           <div className="absolute right-0 top-12 z-50 w-64 rounded-xl border border-zinc-700 bg-zinc-950/95 p-3 shadow-2xl shadow-emerald-500/10">
             <div className="grid gap-2">
               <Link href="/" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Home</Link>
@@ -103,9 +105,7 @@ export async function SiteHeader() {
               <Link href="/about" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">About</Link>
               <Link href="/contact" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Contact</Link>
               <Link href="/dashboard" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Dashboard</Link>
-              <div className="pt-1">
-                <CartNavLink />
-              </div>
+              <Link href="/cart" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Cart</Link>
               {user ? (
                 <form action={signOut}>
                   <button
@@ -123,7 +123,8 @@ export async function SiteHeader() {
               )}
             </div>
           </div>
-        </details>
+          </details>
+        </div>
       </div>
     </header>
   );

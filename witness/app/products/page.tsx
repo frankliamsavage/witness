@@ -210,12 +210,13 @@ export default function ProductsPage() {
                       <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
                         <label className="grid gap-1">
                           <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Size</span>
+                          <div className="relative">
                           <select
                             value={getSelectedSize(design.id)}
                             onChange={(e) =>
                               setSelectedSizes((prev) => ({ ...prev, [design.id]: e.target.value as ProductSize }))
                             }
-                            className="rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                            className="mobile-touch-target w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 pr-8 text-xs text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                           >
                             {Object.keys(SIZE_ADJUSTMENTS).map((size) => (
                               <option key={size} value={size}>
@@ -223,9 +224,14 @@ export default function ProductsPage() {
                               </option>
                             ))}
                           </select>
+                            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400">
+                              ▼
+                            </span>
+                          </div>
                         </label>
                         <label className="grid gap-1">
                           <span className="text-[11px] font-semibold uppercase tracking-wide text-zinc-400">Color</span>
+                          <div className="relative">
                           <select
                             value={getSelectedColor(design.id)}
                             onChange={(e) =>
@@ -234,7 +240,7 @@ export default function ProductsPage() {
                                 [design.id]: e.target.value as ProductColor,
                               }))
                             }
-                            className="rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-xs text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                            className="mobile-touch-target w-full appearance-none rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 pr-8 text-xs text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                           >
                             {Object.keys(COLOR_ADJUSTMENTS).map((color) => (
                               <option key={color} value={color}>
@@ -242,6 +248,10 @@ export default function ProductsPage() {
                               </option>
                             ))}
                           </select>
+                            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-zinc-400">
+                              ▼
+                            </span>
+                          </div>
                         </label>
                       </div>
 
@@ -261,9 +271,13 @@ export default function ProductsPage() {
                         <button
                           type="button"
                           onClick={() => handleAddToCart(design.id)}
-                          className="mobile-touch-target rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                          className={`mobile-touch-target rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-200 ${
+                            lastAddedDesignId === design.id
+                              ? "scale-[1.02] border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
+                              : "border-zinc-700 bg-zinc-900/70 text-zinc-200 hover:border-emerald-500/40 hover:text-emerald-300"
+                          }`}
                         >
-                          Add to Cart
+                          {lastAddedDesignId === design.id ? "Added!" : "Add to Cart"}
                         </button>
                         <Link
                           href="/cart"
@@ -376,6 +390,24 @@ export default function ProductsPage() {
           </aside>
         </section>
 
+        {itemCount > 0 && (
+          <section className="fixed bottom-3 left-3 right-3 z-40 rounded-xl border border-emerald-500/30 bg-zinc-950/95 p-3 shadow-2xl shadow-emerald-500/10 md:hidden">
+            <div className="flex items-center justify-between gap-3">
+              <p className="text-xs text-zinc-300">
+                <span className="font-semibold text-emerald-300">
+                  {itemCount} {itemCount === 1 ? "item" : "items"}
+                </span>{" "}
+                · ${subtotal.toFixed(2)}
+              </p>
+              <Link
+                href="/cart"
+                className="mobile-touch-target inline-flex items-center rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-300"
+              >
+                View Cart
+              </Link>
+            </div>
+          </section>
+        )}
       </main>
     </div>
   );

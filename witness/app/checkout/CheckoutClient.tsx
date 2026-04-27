@@ -36,7 +36,7 @@ export function CheckoutClient() {
 
         <section className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
           <form
-            className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8"
+            className="order-2 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8 lg:order-1"
             onSubmit={(e) => {
               e.preventDefault();
               clearCart();
@@ -64,14 +64,43 @@ export function CheckoutClient() {
                 />
               </label>
               <label className="grid gap-2">
-                <span className="text-sm font-semibold text-emerald-300">Shipping address</span>
+                <span className="text-sm font-semibold text-emerald-300">Street Address</span>
                 <textarea
                   required
-                  rows={4}
+                  rows={3}
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
-                  placeholder="Street, city, state, ZIP"
+                  placeholder="Street and apartment/unit"
                 />
               </label>
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+                <label className="grid gap-2 sm:col-span-1">
+                  <span className="text-sm font-semibold text-emerald-300">City</span>
+                  <input
+                    required
+                    type="text"
+                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                    placeholder="City"
+                  />
+                </label>
+                <label className="grid gap-2 sm:col-span-1">
+                  <span className="text-sm font-semibold text-emerald-300">State</span>
+                  <input
+                    required
+                    type="text"
+                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                    placeholder="State"
+                  />
+                </label>
+                <label className="grid gap-2 sm:col-span-1">
+                  <span className="text-sm font-semibold text-emerald-300">ZIP</span>
+                  <input
+                    required
+                    type="text"
+                    className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                    placeholder="ZIP"
+                  />
+                </label>
+              </div>
             </div>
 
             <button
@@ -83,7 +112,7 @@ export function CheckoutClient() {
             </button>
           </form>
 
-          <aside className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+          <aside className="order-1 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 lg:order-2">
             <h2 className="text-xl font-semibold text-emerald-300">Order summary</h2>
             {items.length === 0 ? (
               <p className="mt-3 text-sm text-zinc-400">No items in cart.</p>
