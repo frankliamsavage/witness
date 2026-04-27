@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { signOut } from "@/app/auth/actions";
+import { CartNavLink } from "@/components/cart/CartNavLink";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 
 export async function SiteHeader() {
@@ -57,6 +58,7 @@ export async function SiteHeader() {
           >
             Dashboard
           </Link>
+          <CartNavLink />
           {user ? (
             <>
               <span className="hidden max-w-[10rem] truncate text-xs text-zinc-400 sm:inline">

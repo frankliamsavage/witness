@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useMemo, useState } from "react";
+import { useCart } from "@/components/cart/CartContext";
 import { productCatalog } from "@/lib/product-catalog";
 
 const filters = ["All", "Official", "Creator Profiles", "Rights Acquired"] as const;
@@ -25,20 +26,13 @@ const COLOR_ADJUSTMENTS: Record<ProductColor, number> = {
   Charcoal: 1,
 };
 
-type CartItem = {
-  designId: number;
-  name: string;
-  size: ProductSize;
-  color: ProductColor;
-  price: number;
-};
-
 export default function ProductsPage() {
   const [selectedFilter, setSelectedFilter] = useState<FilterOption>("All");
   const [selectedCreator, setSelectedCreator] = useState("All Authors");
   const [selectedSizes, setSelectedSizes] = useState<Record<number, ProductSize>>({});
   const [selectedColors, setSelectedColors] = useState<Record<number, ProductColor>>({});
-  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const [lastAddedDesignId, setLastAddedDesignId] = useState<number | null>(null);
+  const { items, addToCart, subtotal, itemCount } = useCart();
 
   const creatorOptions = useMemo(() => {
     const creators = Array.from(
@@ -71,25 +65,28 @@ export default function ProductsPage() {
     );
   }, [selectedCreator, selectedFilter]);
 
-  const cartSubtotal = useMemo(
-    () => cartItems.reduce((sum, item) => sum + item.price, 0),
-    [cartItems],
-  );
-
   const getSelectedSize = (designId: number): ProductSize => selectedSizes[designId] ?? "M";
   const getSelectedColor = (designId: number): ProductColor => selectedColors[designId] ?? "Black";
 
   const getVariantPrice = (fromPrice: number, size: ProductSize, color: ProductColor) =>
     fromPrice + SIZE_ADJUSTMENTS[size] + COLOR_ADJUSTMENTS[color];
 
-  const addToCart = (designId: number, buyNow?: boolean) => {
+  const handleAddToCart = (designId: number) => {
     const design = filteredDesigns.find((item) => item.id === designId);
     if (!design) return;
     const size = getSelectedSize(designId);
     const color = getSelectedColor(designId);
     const price = getVariantPrice(design.fromPrice, size, color);
-    const nextItem: CartItem = { designId: design.id, name: design.name, size, color, price };
-    setCartItems((prev) => [...prev, nextItem]);
+    addToCart({
+      designId: design.id,
+      name: design.name,
+      imagePath: design.imagePath,
+      size,
+      color,
+      price,
+    });
+    setLastAddedDesignId(design.id);
+    window.setTimeout(() => setLastAddedDesignId((prev) => (prev === design.id ? null : prev)), 1600);
   };
 
   return (
@@ -263,26 +260,21 @@ export default function ProductsPage() {
                       <div className="grid grid-cols-2 gap-2">
                         <button
                           type="button"
-                          onClick={() => addToCart(design.id)}
+                          onClick={() => handleAddToCart(design.id)}
                           className="rounded-xl border border-zinc-700 bg-zinc-900/70 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
                         >
                           Add to Cart
                         </button>
                         <Link
-                          href={`/checkout?product=${encodeURIComponent(design.name)}&size=${encodeURIComponent(
-                            getSelectedSize(design.id),
-                          )}&color=${encodeURIComponent(getSelectedColor(design.id))}&price=${encodeURIComponent(
-                            getVariantPrice(
-                              design.fromPrice,
-                              getSelectedSize(design.id),
-                              getSelectedColor(design.id),
-                            ).toFixed(2),
-                          )}`}
+                          href="/cart"
                           className="rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-3 py-2 text-xs font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
                         >
-                          Buy Now
+                          View Cart
                         </Link>
                       </div>
+                      {lastAddedDesignId === design.id && (
+                        <p className="text-xs font-semibold text-emerald-300">Added to cart!</p>
+                      )}
                     </div>
                   </article>
                 ))}
@@ -330,39 +322,32 @@ export default function ProductsPage() {
             <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
               <h3 className="text-xl font-semibold text-emerald-300">Cart</h3>
               <p className="mt-2 text-sm text-zinc-300">
-                {cartItems.length === 0
+                {itemCount === 0
                   ? "Your cart is empty. Add a design to start checkout."
-                  : `${cartItems.length} item${cartItems.length === 1 ? "" : "s"} in cart`}
+                  : `${itemCount} item${itemCount === 1 ? "" : "s"} in cart`}
               </p>
-              {cartItems.length > 0 && (
+              {items.length > 0 && (
                 <div className="mt-4 space-y-2">
-                  {cartItems.map((item, idx) => (
-                    <div key={`${item.designId}-${idx}`} className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-2">
+                  {items.map((item) => (
+                    <div key={item.id} className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-2">
                       <p className="text-xs font-semibold text-zinc-100">{item.name}</p>
                       <p className="text-[11px] text-zinc-400">
-                        {item.size} · {item.color}
+                        {item.size} · {item.color} · Qty {item.quantity}
                       </p>
-                      <p className="text-xs font-semibold text-emerald-300">${item.price.toFixed(2)}</p>
+                      <p className="text-xs font-semibold text-emerald-300">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </p>
                     </div>
                   ))}
                   <p className="pt-1 text-sm text-zinc-300">
-                    Subtotal: <span className="font-semibold text-zinc-100">${cartSubtotal.toFixed(2)}</span>
+                    Subtotal: <span className="font-semibold text-zinc-100">${subtotal.toFixed(2)}</span>
                   </p>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const firstItem = cartItems[0];
-                      if (!firstItem) return;
-                      window.location.href = `/checkout?product=${encodeURIComponent(
-                        firstItem.name,
-                      )}&size=${encodeURIComponent(firstItem.size)}&color=${encodeURIComponent(
-                        firstItem.color,
-                      )}&price=${encodeURIComponent(firstItem.price.toFixed(2))}`;
-                    }}
+                  <Link
+                    href="/cart"
                     className="mt-1 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
                   >
-                    Go to checkout
-                  </button>
+                    Go to Cart
+                  </Link>
                 </div>
               )}
             </section>

@@ -1,20 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import Image from "next/image";
+import Link from "next/link";
+import { useState } from "react";
+import { useCart } from "@/components/cart/CartContext";
 
 export function CheckoutClient() {
-  const searchParams = useSearchParams();
+  const { items, subtotal, clearCart } = useCart();
   const [orderPlaced, setOrderPlaced] = useState(false);
-
-  const summary = useMemo(() => {
-    const product = searchParams.get("product") ?? "Selected product";
-    const size = searchParams.get("size") ?? "M";
-    const color = searchParams.get("color") ?? "Black";
-    const priceValue = Number(searchParams.get("price") ?? "15");
-    const price = Number.isFinite(priceValue) ? priceValue : 15;
-    return { product, size, color, price };
-  }, [searchParams]);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -29,11 +22,24 @@ export function CheckoutClient() {
           </p>
         </section>
 
-        <section className="grid gap-6 lg:grid-cols-[1.5fr_1fr]">
+        {items.length === 0 && !orderPlaced && (
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
+            <p className="text-sm text-zinc-300">Your cart is empty. Add products before checkout.</p>
+            <Link
+              href="/products"
+              className="mt-4 inline-flex rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+            >
+              Browse Products
+            </Link>
+          </section>
+        )}
+
+        <section className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
           <form
             className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8"
             onSubmit={(e) => {
               e.preventDefault();
+              clearCart();
               setOrderPlaced(true);
             }}
           >
@@ -70,7 +76,8 @@ export function CheckoutClient() {
 
             <button
               type="submit"
-              className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+              disabled={items.length === 0}
+              className="mt-5 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
               Place Order
             </button>
@@ -78,26 +85,43 @@ export function CheckoutClient() {
 
           <aside className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
             <h2 className="text-xl font-semibold text-emerald-300">Order summary</h2>
-            <div className="mt-4 rounded-xl border border-zinc-700 bg-zinc-950/80 p-4">
-              <p className="text-sm font-semibold text-zinc-100">{summary.product}</p>
-              <p className="mt-2 text-xs text-zinc-400">
-                Size: <span className="text-zinc-200">{summary.size}</span> · Color:{" "}
-                <span className="text-zinc-200">{summary.color}</span>
-              </p>
-              <p className="mt-3 text-sm text-zinc-300">
-                Price: <span className="font-semibold text-emerald-300">${summary.price.toFixed(2)}</span>
-              </p>
-            </div>
+            {items.length === 0 ? (
+              <p className="mt-3 text-sm text-zinc-400">No items in cart.</p>
+            ) : (
+              <div className="mt-4 space-y-3">
+                {items.map((item) => (
+                  <div key={item.id} className="rounded-xl border border-zinc-700 bg-zinc-950/80 p-3">
+                    <div className="flex items-center gap-3">
+                      <div className="relative h-14 w-14 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900">
+                        <Image src={item.imagePath} alt={item.name} fill className="object-cover" />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-zinc-100">{item.name}</p>
+                        <p className="text-xs text-zinc-400">
+                          {item.size} · {item.color} · Qty {item.quantity}
+                        </p>
+                      </div>
+                      <p className="text-sm font-semibold text-emerald-300">
+                        ${(item.price * item.quantity).toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+                <p className="pt-2 text-sm text-zinc-300">
+                  Total: <span className="font-semibold text-zinc-100">${subtotal.toFixed(2)}</span>
+                </p>
+              </div>
+            )}
           </aside>
         </section>
 
         {orderPlaced && (
           <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
             <p className="text-sm font-semibold text-emerald-300">
-              Thank you! This is a demo. Orders coming soon.
+              Thank you! This is a demo.
             </p>
             <p className="mt-1 text-sm text-zinc-100">
-              Your checkout details were captured for preview only. Live payments are not enabled yet.
+              Orders are coming soon. Live payment processing is not enabled yet.
             </p>
           </section>
         )}
