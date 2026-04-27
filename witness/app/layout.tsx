@@ -52,6 +52,9 @@ export default async function RootLayout({
                 <Link href="/privacy" className="transition-colors hover:text-emerald-300">
                   Privacy Policy
                 </Link>
+                <Link href="/shipping" className="transition-colors hover:text-emerald-300">
+                  Shipping Policy
+                </Link>
                 <Link href="/contact" className="transition-colors hover:text-emerald-300">
                   Contact
                 </Link>
