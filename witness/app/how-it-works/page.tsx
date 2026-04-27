@@ -87,12 +87,12 @@ export default function HowItWorksPage() {
               <div className="rounded-xl border border-zinc-800 bg-zinc-950/70 p-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <p className="text-sm font-semibold uppercase tracking-wide text-emerald-300">
-                    Platform Margin (33.3%)
+                    Platform Margin (40.3%)
                   </p>
-                  <p className="text-sm font-semibold text-zinc-100">$5.00</p>
+                  <p className="text-sm font-semibold text-zinc-100">$6.05</p>
                 </div>
                 <div className="mt-3 h-2 w-full rounded-full bg-zinc-800">
-                  <div className="h-2 rounded-full bg-emerald-400/65" style={{ width: "33.3%" }} />
+                  <div className="h-2 rounded-full bg-emerald-400/65" style={{ width: "40.3%" }} />
                 </div>
                 <p className="mt-3 text-sm text-zinc-300">
                   Built into the $15 retail price to cover operations, risk, and profit.
