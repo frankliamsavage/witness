@@ -6,6 +6,7 @@ import { useCart } from "@/components/cart/CartContext";
 
 export default function CartPage() {
   const { items, subtotal, updateQuantity, removeFromCart, clearCart, itemCount } = useCart();
+  const liveCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT === "true";
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -40,11 +41,16 @@ export default function CartPage() {
                 Subtotal: <span className="font-semibold text-zinc-100">${subtotal.toFixed(2)}</span>
               </p>
               <p className="mt-1 text-xs text-zinc-400">Shipping and tax are calculated at final checkout.</p>
+              {!liveCheckoutEnabled && (
+                <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
+                  Demo mode: checkout currently does not process real payments.
+                </p>
+              )}
               <Link
                 href="/checkout"
                 className="mobile-touch-target mt-4 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
               >
-                Checkout
+                {liveCheckoutEnabled ? "Checkout" : "Test Checkout"}
               </Link>
               <button
                 type="button"

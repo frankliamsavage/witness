@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { isPayoutLegalReviewApproved } from "@/lib/runtime-flags";
 
 const REVENUE_ROYALTY_TIERS = [
   { name: "Launch", ratePercent: 10, range: "$0 - $1,000" },
@@ -15,6 +16,7 @@ export const metadata: Metadata = {
 };
 
 export default function AgreementsPage() {
+  const payoutsApproved = isPayoutLegalReviewApproved();
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-16 sm:px-10 lg:px-16">
@@ -27,6 +29,15 @@ export default function AgreementsPage() {
             Compare royalty and one-time options so every design has clear terms before launch.
           </p>
         </section>
+
+        {!payoutsApproved && (
+          <section className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <p className="text-sm font-semibold text-amber-200">Payouts are disabled pending legal review.</p>
+            <p className="mt-1 text-xs text-amber-100">
+              Agreement terms are visible for transparency, but real creator payouts remain locked until legal sign-off.
+            </p>
+          </section>
+        )}
 
         <section className="grid gap-6 lg:grid-cols-2">
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">

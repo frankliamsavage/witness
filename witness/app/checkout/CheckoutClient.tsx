@@ -8,6 +8,9 @@ import { useCart } from "@/components/cart/CartContext";
 export function CheckoutClient() {
   const { items, subtotal, clearCart } = useCart();
   const [orderPlaced, setOrderPlaced] = useState(false);
+  const [processingPayment, setProcessingPayment] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const liveCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT === "true";
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -20,6 +23,11 @@ export function CheckoutClient() {
           <p className="mt-3 text-sm text-zinc-300">
             Review your item, add your shipping details, and place the order.
           </p>
+          {!liveCheckoutEnabled && (
+            <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
+              Demo checkout only: no real payment is processed yet.
+            </p>
+          )}
         </section>
 
         {items.length === 0 && !orderPlaced && (
@@ -37,8 +45,50 @@ export function CheckoutClient() {
         <section className="grid gap-6 lg:grid-cols-[1.7fr_1fr]">
           <form
             className="order-2 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8 lg:order-1"
-            onSubmit={(e) => {
+            onSubmit={async (e) => {
               e.preventDefault();
+              setErrorMessage(null);
+              const form = e.currentTarget as HTMLFormElement;
+              const data = new FormData(form);
+              const customer = {
+                name: String(data.get("name") ?? ""),
+                email: String(data.get("email") ?? ""),
+                address: String(data.get("address") ?? ""),
+                city: String(data.get("city") ?? ""),
+                state: String(data.get("state") ?? ""),
+                zip: String(data.get("zip") ?? ""),
+              };
+
+              if (liveCheckoutEnabled) {
+                setProcessingPayment(true);
+                try {
+                  const response = await fetch("/api/checkout", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                      items: items.map((item) => ({
+                        name: `${item.name} (${item.size}, ${item.color})`,
+                        quantity: item.quantity,
+                        price: item.price,
+                      })),
+                      customer,
+                    }),
+                  });
+                  const result = (await response.json().catch(() => ({}))) as { ok?: boolean; url?: string; error?: string };
+                  if (!response.ok || !result.ok || !result.url) {
+                    setErrorMessage(result.error ?? "Unable to start payment. Please try again.");
+                    return;
+                  }
+                  window.location.href = result.url;
+                  return;
+                } catch {
+                  setErrorMessage("Network error starting checkout session.");
+                  return;
+                } finally {
+                  setProcessingPayment(false);
+                }
+              }
+
               clearCart();
               setOrderPlaced(true);
             }}
@@ -50,6 +100,7 @@ export function CheckoutClient() {
                 <input
                   required
                   type="text"
+                  name="name"
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                   placeholder="Your full name"
                 />
@@ -59,6 +110,7 @@ export function CheckoutClient() {
                 <input
                   required
                   type="email"
+                  name="email"
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                   placeholder="you@example.com"
                 />
@@ -67,6 +119,7 @@ export function CheckoutClient() {
                 <span className="text-sm font-semibold text-emerald-300">Street Address</span>
                 <textarea
                   required
+                  name="address"
                   rows={3}
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                   placeholder="Street and apartment/unit"
@@ -78,6 +131,7 @@ export function CheckoutClient() {
                   <input
                     required
                     type="text"
+                    name="city"
                     className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="City"
                   />
@@ -87,6 +141,7 @@ export function CheckoutClient() {
                   <input
                     required
                     type="text"
+                    name="state"
                     className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="State"
                   />
@@ -96,6 +151,7 @@ export function CheckoutClient() {
                   <input
                     required
                     type="text"
+                    name="zip"
                     className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="ZIP"
                   />
@@ -105,11 +161,20 @@ export function CheckoutClient() {
 
             <button
               type="submit"
-              disabled={items.length === 0}
+              disabled={items.length === 0 || processingPayment}
               className="mobile-touch-target mt-5 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              Place Order
+              {liveCheckoutEnabled
+                ? processingPayment
+                  ? "Starting Payment..."
+                  : "Proceed to Secure Payment"
+                : "Submit Test Order"}
             </button>
+            {errorMessage && (
+              <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+                {errorMessage}
+              </p>
+            )}
           </form>
 
           <aside className="order-1 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 lg:order-2">
@@ -150,7 +215,7 @@ export function CheckoutClient() {
               Thank you! This is a demo.
             </p>
             <p className="mt-1 text-sm text-zinc-100">
-              Orders are coming soon. Live payment processing is not enabled yet.
+              No charge was made. Orders are coming soon and live payments are not enabled yet.
             </p>
           </section>
         )}

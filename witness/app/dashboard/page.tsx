@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SupabaseMissingConfigNotice } from "@/components/SupabaseMissingConfigNotice";
+import { isPayoutLegalReviewApproved } from "@/lib/runtime-flags";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 
@@ -75,6 +76,7 @@ function getProgressToNextRevenueTier(totalRevenue: number) {
 }
 
 export default async function DashboardPage() {
+  const payoutsApproved = isPayoutLegalReviewApproved();
   if (!getSupabasePublicConfig()) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -140,6 +142,15 @@ export default async function DashboardPage() {
             </div>
           )}
         </section>
+
+        {!payoutsApproved && (
+          <section className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <p className="text-sm font-semibold text-amber-200">Creator payouts are currently disabled.</p>
+            <p className="mt-1 text-xs text-amber-100">
+              Legal review is in progress. Submission and agreement tools are active, but payout execution is locked.
+            </p>
+          </section>
+        )}
 
         <section className="grid gap-6 md:grid-cols-3">
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
