@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: Request) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
@@ -19,7 +20,16 @@ export async function POST(request: Request) {
   try {
     const event = stripe.webhooks.constructEvent(payload, signature, webhookSecret);
     if (event.type === "checkout.session.completed") {
-      // Hook point: persist paid order and trigger fulfillment.
+      const session = event.data.object;
+      const supabase = await createClient();
+      await supabase
+        .from("checkout_sessions")
+        .update({
+          status: "completed",
+          payment_status: "paid",
+          amount_total: typeof session.amount_total === "number" ? session.amount_total / 100 : null,
+        })
+        .eq("stripe_session_id", session.id);
     }
     return NextResponse.json({ ok: true });
   } catch (error) {

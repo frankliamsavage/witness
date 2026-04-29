@@ -3,6 +3,9 @@ import { createClient } from "@/lib/supabase/server";
 
 type UserMeta = { role?: string };
 type ShippingAddress = {
+  id?: string;
+  label?: string | null;
+  is_default?: boolean;
   recipient_name: string | null;
   line1: string | null;
   line2: string | null;
@@ -57,6 +60,8 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
   }
 
   const shippingFallback: ShippingAddress = {
+    id: undefined,
+    label: null,
     recipient_name: null,
     line1: null,
     line2: null,
@@ -69,28 +74,30 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
   const purchasesFallback: PurchaseRow[] = [];
 
   const [shippingResult, purchasesResult] = await Promise.all([
-    supabase.rpc("admin_get_user_shipping_address", { p_target_user_id: userId }),
+    supabase.rpc("admin_get_user_shipping_addresses", { p_target_user_id: userId }),
     supabase.rpc("admin_get_user_purchases", { p_target_user_id: userId, p_limit: 20 }),
   ]);
 
-  let shipping = shippingFallback;
+  let shippingAddresses: ShippingAddress[] = [];
   if (!shippingResult.error) {
-    const shippingData = Array.isArray(shippingResult.data) ? shippingResult.data[0] : shippingResult.data;
-    if (shippingData) {
-      shipping = {
-        recipient_name: (shippingData as ShippingAddress).recipient_name ?? null,
-        line1: (shippingData as ShippingAddress).line1 ?? null,
-        line2: (shippingData as ShippingAddress).line2 ?? null,
-        city: (shippingData as ShippingAddress).city ?? null,
-        state: (shippingData as ShippingAddress).state ?? null,
-        postal_code: (shippingData as ShippingAddress).postal_code ?? null,
-        country: (shippingData as ShippingAddress).country ?? null,
-        phone_number: (shippingData as ShippingAddress).phone_number ?? null,
-      };
-    }
+    const rows = Array.isArray(shippingResult.data) ? shippingResult.data : [];
+    shippingAddresses = rows.map((shippingData) => ({
+      id: (shippingData as ShippingAddress).id,
+      label: (shippingData as ShippingAddress).label ?? null,
+      recipient_name: (shippingData as ShippingAddress).recipient_name ?? null,
+      line1: (shippingData as ShippingAddress).line1 ?? null,
+      line2: (shippingData as ShippingAddress).line2 ?? null,
+      city: (shippingData as ShippingAddress).city ?? null,
+      state: (shippingData as ShippingAddress).state ?? null,
+      postal_code: (shippingData as ShippingAddress).postal_code ?? null,
+      country: (shippingData as ShippingAddress).country ?? null,
+      phone_number: (shippingData as ShippingAddress).phone_number ?? null,
+      is_default: Boolean((shippingData as Record<string, unknown>).is_default),
+    }));
   } else if (!isMissingFunctionError(shippingResult.error.message)) {
     return NextResponse.json({ ok: false, error: shippingResult.error.message }, { status: 500 });
   }
+  if (!shippingAddresses.length) shippingAddresses = [shippingFallback];
 
   let purchases = purchasesFallback;
   if (!purchasesResult.error) {
@@ -105,7 +112,8 @@ export async function GET(_: Request, context: { params: Promise<{ userId: strin
       ...detail,
       total_spent: typeof detail.total_spent === "number" ? detail.total_spent : 0,
       phone_number: typeof detail.phone_number === "string" ? detail.phone_number : null,
-      shipping,
+      shipping: shippingAddresses[0],
+      shipping_addresses: shippingAddresses.filter((entry) => entry.line1 || entry.city || entry.postal_code),
       purchases,
     },
   });

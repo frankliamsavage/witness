@@ -14,6 +14,7 @@ export const metadata: Metadata = {
 type UserMeta = {
   screen_name?: string;
   full_name?: string;
+  phone?: string;
   shipping_address?: string;
   shipping_city?: string;
   shipping_state?: string;
@@ -43,13 +44,20 @@ export default async function CheckoutPage() {
   }
 
   const meta = (user.user_metadata ?? {}) as UserMeta;
+  const { data: addresses } = await supabase
+    .from("user_addresses")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("is_default", { ascending: false })
+    .order("created_at", { ascending: true });
+  const hasSetup = Boolean(meta.full_name?.trim()) && Boolean((addresses?.length ?? 0) > 0);
+  if (!hasSetup) {
+    redirect("/account/setup?next=/checkout");
+  }
   const initialCustomer = {
     name: meta.full_name ?? meta.screen_name ?? "",
     email: user.email ?? "",
-    address: meta.shipping_address ?? "",
-    city: meta.shipping_city ?? "",
-    state: meta.shipping_state ?? "",
-    zip: meta.shipping_zip ?? "",
+    phone: meta.phone ?? "",
   };
 
   return (
@@ -64,7 +72,7 @@ export default async function CheckoutPage() {
         </div>
       }
     >
-      <CheckoutClient initialCustomer={initialCustomer} />
+      <CheckoutClient initialCustomer={initialCustomer} initialAddresses={addresses ?? []} />
     </Suspense>
   );
 }

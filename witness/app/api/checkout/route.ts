@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getAllSiteSettings } from "@/lib/site-settings";
+import { createClient } from "@/lib/supabase/server";
+import { formatShippingSummary } from "@/lib/addresses";
 
 type CheckoutItem = {
   name: string;
@@ -13,10 +15,19 @@ type CheckoutPayload = {
   customer?: {
     name?: string;
     email?: string;
-    address?: string;
+    phone?: string;
+  };
+  shippingAddress?: {
+    id?: string;
+    label?: string;
+    recipient_name?: string;
+    address_line1?: string;
+    address_line2?: string;
     city?: string;
     state?: string;
-    zip?: string;
+    postal_code?: string;
+    country?: string;
+    phone?: string;
   };
 };
 
@@ -43,8 +54,19 @@ export async function POST(request: Request) {
   }
 
   const stripe = new Stripe(stripeSecretKey, { apiVersion: "2026-04-22.dahlia" });
+  const shipping = body?.shippingAddress;
+  if (!shipping?.recipient_name || !shipping.address_line1 || !shipping.city || !shipping.state || !shipping.postal_code || !shipping.country) {
+    return NextResponse.json({ ok: false, error: "Shipping address is required." }, { status: 400 });
+  }
+
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
+
   const customerNote = body?.customer
-    ? `Name: ${body.customer.name ?? ""}\nEmail: ${body.customer.email ?? ""}\nAddress: ${body.customer.address ?? ""}, ${body.customer.city ?? ""}, ${body.customer.state ?? ""} ${body.customer.zip ?? ""}`
+    ? `Name: ${body.customer.name ?? ""}\nEmail: ${body.customer.email ?? ""}\nPhone: ${body.customer.phone ?? ""}\nShip to: ${formatShippingSummary(shipping)}`
     : undefined;
 
   try {
@@ -63,7 +85,35 @@ export async function POST(request: Request) {
         },
       })),
       customer_email: body?.customer?.email,
-      metadata: customerNote ? { customer_note: customerNote } : undefined,
+      metadata: {
+        ...(customerNote ? { customer_note: customerNote } : {}),
+        user_id: user.id,
+        shipping_recipient_name: shipping.recipient_name,
+        shipping_address_line1: shipping.address_line1,
+        shipping_address_line2: shipping.address_line2 ?? "",
+        shipping_city: shipping.city,
+        shipping_state: shipping.state,
+        shipping_postal_code: shipping.postal_code,
+        shipping_country: shipping.country,
+        shipping_phone: shipping.phone ?? "",
+      },
+    });
+
+    await supabase.from("checkout_sessions").insert({
+      user_id: user.id,
+      stripe_session_id: session.id,
+      status: "created",
+      payment_status: "pending",
+      item_count: items.reduce((sum, item) => sum + Math.max(1, item.quantity), 0),
+      amount_total: items.reduce((sum, item) => sum + Math.round(item.price * 100) * Math.max(1, item.quantity), 0) / 100,
+      shipping_recipient_name: shipping.recipient_name,
+      shipping_address_line1: shipping.address_line1,
+      shipping_address_line2: shipping.address_line2 ?? null,
+      shipping_city: shipping.city,
+      shipping_state: shipping.state,
+      shipping_postal_code: shipping.postal_code,
+      shipping_country: shipping.country,
+      shipping_phone: shipping.phone ?? null,
     });
 
     return NextResponse.json({ ok: true, url: session.url });

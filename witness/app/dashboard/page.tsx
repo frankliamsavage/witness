@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 
 type UserMeta = {
   screen_name?: string;
+  full_name?: string;
   role?: string;
   total_sales?: number | string;
   total_revenue?: number | string;
@@ -98,6 +99,14 @@ export default async function DashboardPage() {
   }
 
   const meta = user.user_metadata as UserMeta | null;
+  const { count: addressCount } = await supabase
+    .from("user_addresses")
+    .select("id", { head: true, count: "exact" })
+    .eq("user_id", user.id);
+  const setupIncomplete = !meta?.full_name || (addressCount ?? 0) < 1;
+  if (setupIncomplete) {
+    redirect("/account/setup?next=/dashboard");
+  }
   const totalRevenue = parseMoney(meta?.total_revenue) || parseMoney(meta?.total_sales);
   const currentTier = getRevenueRoyaltyTier(totalRevenue);
   const progress = getProgressToNextRevenueTier(totalRevenue);
@@ -217,10 +226,10 @@ export default async function DashboardPage() {
                 Profile
               </Link>
               <Link
-                href="/account/shipping"
+                href="/account/addresses"
                 className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
               >
-                Shipping Info
+                Address Book
               </Link>
               <Link
                 href="/agreements"

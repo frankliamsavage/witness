@@ -28,6 +28,19 @@ type UserRow = {
     country: string | null;
     phone_number: string | null;
   };
+  shipping_addresses?: Array<{
+    id?: string;
+    label?: string | null;
+    is_default?: boolean;
+    recipient_name: string | null;
+    line1: string | null;
+    line2: string | null;
+    city: string | null;
+    state: string | null;
+    postal_code: string | null;
+    country: string | null;
+    phone_number: string | null;
+  }>;
   purchases?: Array<{
     order_id: string;
     order_number: string;
@@ -260,18 +273,25 @@ export function UsersClient() {
 
             <div className="rounded-lg border border-zinc-700 bg-zinc-950/70 p-3 text-sm text-zinc-200">
               <p className="text-sm font-semibold text-emerald-300">Shipping Address</p>
-              {!(selectedUser.shipping?.line1 || selectedUser.shipping?.city || selectedUser.shipping?.postal_code) ? (
+              {!selectedUser.shipping_addresses?.length ? (
                 <p className="mt-2 text-xs text-zinc-400">No shipping address on file.</p>
               ) : (
-                <div className="mt-2 grid gap-2 text-xs text-zinc-300 sm:grid-cols-2">
-                  <p><span className="text-zinc-400">Recipient:</span> {selectedUser.shipping?.recipient_name || "-"}</p>
-                  <p><span className="text-zinc-400">Phone:</span> {selectedUser.shipping?.phone_number || "-"}</p>
-                  <p><span className="text-zinc-400">Line 1:</span> {selectedUser.shipping?.line1 || "-"}</p>
-                  <p><span className="text-zinc-400">Line 2:</span> {selectedUser.shipping?.line2 || "-"}</p>
-                  <p><span className="text-zinc-400">City:</span> {selectedUser.shipping?.city || "-"}</p>
-                  <p><span className="text-zinc-400">State:</span> {selectedUser.shipping?.state || "-"}</p>
-                  <p><span className="text-zinc-400">ZIP:</span> {selectedUser.shipping?.postal_code || "-"}</p>
-                  <p><span className="text-zinc-400">Country:</span> {selectedUser.shipping?.country || "-"}</p>
+                <div className="mt-2 space-y-2">
+                  {selectedUser.shipping_addresses.map((address) => (
+                    <div key={address.id ?? `${address.line1}-${address.postal_code}`} className="rounded-lg border border-zinc-800 p-2 text-xs text-zinc-300">
+                      <p className="font-semibold text-zinc-100">
+                        {address.label || "Address"} {address.is_default ? <span className="text-emerald-300">(Default)</span> : null}
+                      </p>
+                      <p>
+                        {address.recipient_name || "-"} · {address.phone_number || "-"}
+                      </p>
+                      <p>
+                        {address.line1 || "-"}
+                        {address.line2 ? `, ${address.line2}` : ""}, {address.city || "-"}, {address.state || "-"}{" "}
+                        {address.postal_code || "-"}, {address.country || "-"}
+                      </p>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

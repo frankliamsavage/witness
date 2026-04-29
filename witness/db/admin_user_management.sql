@@ -19,8 +19,91 @@ create table if not exists public.admin_audit_log (
   created_at timestamptz not null default now()
 );
 
+create table if not exists public.user_addresses (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users(id) on delete cascade,
+  label text null,
+  recipient_name text not null,
+  address_line1 text not null,
+  address_line2 text null,
+  city text not null,
+  state text not null,
+  postal_code text not null,
+  country text not null default 'United States',
+  phone text null,
+  is_default boolean not null default false,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create table if not exists public.checkout_sessions (
+  id bigserial primary key,
+  user_id uuid not null references auth.users(id) on delete cascade,
+  stripe_session_id text not null unique,
+  status text not null default 'created',
+  payment_status text not null default 'pending',
+  item_count integer not null default 0,
+  amount_total numeric null,
+  shipping_recipient_name text null,
+  shipping_address_line1 text null,
+  shipping_address_line2 text null,
+  shipping_city text null,
+  shipping_state text null,
+  shipping_postal_code text null,
+  shipping_country text null,
+  shipping_phone text null,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+create unique index if not exists user_addresses_one_default_per_user
+  on public.user_addresses (user_id)
+  where is_default = true;
+
+create or replace function public.touch_updated_at()
+returns trigger
+language plpgsql
+as $$
+begin
+  new.updated_at = now();
+  return new;
+end;
+$$;
+
+drop trigger if exists user_addresses_touch_updated_at on public.user_addresses;
+create trigger user_addresses_touch_updated_at
+before update on public.user_addresses
+for each row execute function public.touch_updated_at();
+
+drop trigger if exists checkout_sessions_touch_updated_at on public.checkout_sessions;
+create trigger checkout_sessions_touch_updated_at
+before update on public.checkout_sessions
+for each row execute function public.touch_updated_at();
+
 alter table public.user_admin_state enable row level security;
 alter table public.admin_audit_log enable row level security;
+alter table public.user_addresses enable row level security;
+alter table public.checkout_sessions enable row level security;
+
+drop policy if exists user_addresses_select_own on public.user_addresses;
+create policy user_addresses_select_own on public.user_addresses
+for select to authenticated using (auth.uid() = user_id);
+
+drop policy if exists user_addresses_insert_own on public.user_addresses;
+create policy user_addresses_insert_own on public.user_addresses
+for insert to authenticated with check (auth.uid() = user_id);
+
+drop policy if exists user_addresses_update_own on public.user_addresses;
+create policy user_addresses_update_own on public.user_addresses
+for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
+
+drop policy if exists user_addresses_delete_own on public.user_addresses;
+create policy user_addresses_delete_own on public.user_addresses
+for delete to authenticated using (auth.uid() = user_id);
+
+drop policy if exists checkout_sessions_none on public.checkout_sessions;
+create policy checkout_sessions_none on public.checkout_sessions
+for all to authenticated using (false) with check (false);
 
 drop policy if exists user_admin_state_read_none on public.user_admin_state;
 create policy user_admin_state_read_none on public.user_admin_state
@@ -114,6 +197,12 @@ begin
     ) then
       execute 'select coalesce(sum(total), 0)::numeric from public.orders where user_id = $1' into total_spent using p_user_id;
     end if;
+  end if;
+
+  if coalesce(total_spent, 0) = 0 and to_regclass('public.checkout_sessions') is not null then
+    execute 'select coalesce(sum(amount_total), 0)::numeric from public.checkout_sessions where user_id = $1 and payment_status = ''paid'''
+      into total_spent
+      using p_user_id;
   end if;
 
   return coalesce(total_spent, 0);
@@ -363,8 +452,11 @@ $$;
 
 grant execute on function public.admin_apply_dangerous_action(uuid, text, text) to authenticated;
 
-create or replace function public.admin_get_user_shipping_address(p_target_user_id uuid)
+create or replace function public.admin_get_user_shipping_addresses(p_target_user_id uuid)
 returns table (
+  id uuid,
+  label text,
+  is_default boolean,
   recipient_name text,
   line1 text,
   line2 text,
@@ -379,6 +471,24 @@ security definer
 set search_path = public, auth
 as $$
   select
+    ua.id,
+    ua.label,
+    ua.is_default,
+    ua.recipient_name,
+    ua.address_line1 as line1,
+    ua.address_line2 as line2,
+    ua.city,
+    ua.state,
+    ua.postal_code,
+    ua.country,
+    ua.phone as phone_number
+  from public.user_addresses ua
+  where public.is_admin_user(auth.uid()) and ua.user_id = p_target_user_id
+  union all
+  select
+    null::uuid as id,
+    'Profile Shipping'::text as label,
+    true as is_default,
     coalesce(
       nullif(u.raw_user_meta_data->>'full_name', ''),
       nullif(u.raw_user_meta_data->>'screen_name', '')
@@ -388,13 +498,15 @@ as $$
     nullif(u.raw_user_meta_data->>'shipping_city', '') as city,
     nullif(u.raw_user_meta_data->>'shipping_state', '') as state,
     nullif(u.raw_user_meta_data->>'shipping_zip', '') as postal_code,
-    coalesce(nullif(u.raw_user_meta_data->>'shipping_country', ''), 'US') as country,
+    coalesce(nullif(u.raw_user_meta_data->>'shipping_country', ''), 'United States') as country,
     coalesce(nullif(u.raw_user_meta_data->>'shipping_phone', ''), nullif(u.raw_user_meta_data->>'phone', '')) as phone_number
   from auth.users u
-  where public.is_admin_user(auth.uid()) and u.id = p_target_user_id
+  where public.is_admin_user(auth.uid())
+    and u.id = p_target_user_id
+    and not exists (select 1 from public.user_addresses ua2 where ua2.user_id = p_target_user_id)
 $$;
 
-grant execute on function public.admin_get_user_shipping_address(uuid) to authenticated;
+grant execute on function public.admin_get_user_shipping_addresses(uuid) to authenticated;
 
 create or replace function public.admin_get_user_purchases(
   p_target_user_id uuid,
@@ -421,6 +533,28 @@ begin
   end if;
 
   if to_regclass('public.orders') is null then
+    if to_regclass('public.checkout_sessions') is not null then
+      return query
+      select
+        cs.stripe_session_id as order_id,
+        cs.stripe_session_id as order_number,
+        cs.created_at as order_date,
+        cs.status as order_status,
+        cs.payment_status as payment_status,
+        cs.item_count as item_count,
+        coalesce(cs.amount_total, 0)::numeric as order_total,
+        concat_ws(
+          ', ',
+          nullif(cs.shipping_address_line1, ''),
+          nullif(cs.shipping_city, ''),
+          nullif(cs.shipping_state, ''),
+          nullif(cs.shipping_postal_code, '')
+        ) as shipping_summary
+      from public.checkout_sessions cs
+      where cs.user_id = p_target_user_id
+      order by cs.created_at desc
+      limit greatest(coalesce(p_limit, 20), 1);
+    end if;
     return;
   end if;
 
