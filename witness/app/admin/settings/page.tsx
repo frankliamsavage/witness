@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SupabaseMissingConfigNotice } from "@/components/SupabaseMissingConfigNotice";
 import { getAllSiteSettings } from "@/lib/site-settings";
@@ -58,6 +59,16 @@ export default async function AdminSettingsPage() {
         </section>
 
         <SettingsClient initialSettings={settings} />
+        <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+          <p className="text-sm font-semibold text-emerald-300">User Management</p>
+          <p className="mt-2 text-sm text-zinc-300">Open admin user account tools for role/status and maintenance actions.</p>
+          <Link
+            href="/admin/users"
+            className="mt-4 inline-flex rounded-lg border border-emerald-500/40 bg-emerald-500/15 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/25"
+          >
+            Open User Data Management
+          </Link>
+        </section>
       </main>
     </div>
   );

@@ -59,12 +59,20 @@ export async function SiteHeader() {
             Dashboard
           </Link>
           {user?.user_metadata?.role === "Admin" && (
-            <Link
-              href="/admin/settings"
-              className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
-            >
-              Admin
-            </Link>
+            <>
+              <Link
+                href="/admin/settings"
+                className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                Admin
+              </Link>
+              <Link
+                href="/admin/users"
+                className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                Users
+              </Link>
+            </>
           )}
           <CartNavLink />
           {user ? (
@@ -114,7 +122,10 @@ export async function SiteHeader() {
               <Link href="/contact" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Contact</Link>
               <Link href="/dashboard" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Dashboard</Link>
               {user?.user_metadata?.role === "Admin" && (
-                <Link href="/admin/settings" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Admin</Link>
+                <>
+                  <Link href="/admin/settings" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Admin</Link>
+                  <Link href="/admin/users" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Users</Link>
+                </>
               )}
               <Link href="/cart" className="mobile-touch-target rounded-lg border border-zinc-700 px-3 py-2 text-xs font-semibold text-zinc-200">Cart</Link>
               {user ? (
