@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import {
   EMPTY_FOLLOW_LINKS,
@@ -23,8 +23,20 @@ type CreatorProfile = {
   follow_links: Partial<FollowLinks>;
 };
 
+type LocalDraft = {
+  screen_name?: string;
+  display_name?: string;
+  tagline?: string;
+  bio?: string;
+  mission?: string;
+  follow_links?: Partial<FollowLinks>;
+};
+
+const LOCAL_PROFILE_DRAFT_KEY = "witness.creator.profile.v2.draft";
+
 export default function ProfilePage() {
   const router = useRouter();
+  const dirtyRef = useRef(false);
   const [visualsOpen, setVisualsOpen] = useState(true);
   const [bioOpen, setBioOpen] = useState(false);
   const [linksOpen, setLinksOpen] = useState(false);
@@ -42,6 +54,8 @@ export default function ProfilePage() {
   const [followLinks, setFollowLinks] = useState<FollowLinks>(EMPTY_FOLLOW_LINKS);
   const [followErrors, setFollowErrors] = useState<Partial<Record<FollowPlatform, string>>>({});
   const [saved, setSaved] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
   const [screenName, setScreenName] = useState("");
 
   useEffect(() => {
@@ -71,12 +85,29 @@ export default function ProfilePage() {
     let cancelled = false;
     (async () => {
       try {
+        const rawDraft = localStorage.getItem(LOCAL_PROFILE_DRAFT_KEY);
+        if (rawDraft) {
+          const parsed = JSON.parse(rawDraft) as LocalDraft;
+          if (!cancelled) {
+            if (parsed.screen_name) setScreenName(parsed.screen_name);
+            if (typeof parsed.display_name === "string") setDisplayName(parsed.display_name);
+            if (typeof parsed.tagline === "string") setTagline(parsed.tagline);
+            if (typeof parsed.bio === "string") setBio(parsed.bio);
+            if (typeof parsed.mission === "string") setMission(parsed.mission);
+            if (parsed.follow_links) {
+              const localNormalized = normalizeFollowLinks(parsed.follow_links);
+              setFollowLinks(localNormalized.links);
+            }
+          }
+        }
+
         const response = await fetch("/api/profile/me", { cache: "no-store" });
         const result = (await response.json().catch(() => ({}))) as {
           ok?: boolean;
           profile?: CreatorProfile;
         };
         if (cancelled || !response.ok || !result.ok || !result.profile) return;
+        if (dirtyRef.current) return;
         setScreenName(result.profile.screen_name ?? "");
         setDisplayName(result.profile.display_name ?? result.profile.screen_name ?? "");
         setTagline(result.profile.tagline ?? "");
@@ -115,6 +146,15 @@ export default function ProfilePage() {
   };
 
   const saveDraft = () => {
+    const draft: LocalDraft = {
+      screen_name: screenName,
+      display_name: displayName,
+      tagline,
+      bio,
+      mission,
+      follow_links: followLinks,
+    };
+    localStorage.setItem(LOCAL_PROFILE_DRAFT_KEY, JSON.stringify(draft));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -127,11 +167,13 @@ export default function ProfilePage() {
     .filter((entry) => entry.value);
 
   const saveWithValidation = () => {
+    setSaveError(null);
     const normalized = normalizeFollowLinks(followLinks);
     setFollowErrors(normalized.errors);
     setFollowLinks(normalized.links);
     if (Object.keys(normalized.errors).length) return;
     void (async () => {
+      setSaving(true);
       const response = await fetch("/api/profile/me", {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
@@ -143,8 +185,15 @@ export default function ProfilePage() {
           follow_links: normalized.links,
         }),
       });
-      if (!response.ok) return;
+      if (!response.ok) {
+        const result = (await response.json().catch(() => ({}))) as { error?: string };
+        setSaveError(result.error ?? "Unable to save profile right now.");
+        saveDraft();
+        setSaving(false);
+        return;
+      }
       saveDraft();
+      setSaving(false);
     })();
   };
 
@@ -262,7 +311,10 @@ export default function ProfilePage() {
                   <span className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Display name</span>
                   <input
                     value={displayName}
-                    onChange={(e) => setDisplayName(e.target.value)}
+                    onChange={(e) => {
+                      dirtyRef.current = true;
+                      setDisplayName(e.target.value);
+                    }}
                     className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="FrankSavage"
                   />
@@ -271,7 +323,10 @@ export default function ProfilePage() {
                   <span className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Tagline</span>
                   <input
                     value={tagline}
-                    onChange={(e) => setTagline(e.target.value)}
+                    onChange={(e) => {
+                      dirtyRef.current = true;
+                      setTagline(e.target.value);
+                    }}
                     className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="No secrets. Just values."
                   />
@@ -281,7 +336,10 @@ export default function ProfilePage() {
                   <textarea
                     rows={4}
                     value={bio}
-                    onChange={(e) => setBio(e.target.value)}
+                    onChange={(e) => {
+                      dirtyRef.current = true;
+                      setBio(e.target.value);
+                    }}
                     className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="Tell your story."
                   />
@@ -291,7 +349,10 @@ export default function ProfilePage() {
                   <textarea
                     rows={3}
                     value={mission}
-                    onChange={(e) => setMission(e.target.value)}
+                    onChange={(e) => {
+                      dirtyRef.current = true;
+                      setMission(e.target.value);
+                    }}
                     className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                     placeholder="What your brand stands for."
                   />
@@ -324,12 +385,16 @@ export default function ProfilePage() {
                       <input
                         value={followLinks[platform]}
                         onChange={(e) =>
-                          setFollowLinks((prev) => ({
-                            ...prev,
-                            [platform]: e.target.value,
-                          }))
+                          {
+                            dirtyRef.current = true;
+                            setFollowLinks((prev) => ({
+                              ...prev,
+                              [platform]: e.target.value,
+                            }));
+                          }
                         }
                         onBlur={() => {
+                          dirtyRef.current = true;
                           const normalized = normalizeFollowUrl(platform, followLinks[platform]);
                           setFollowLinks((prev) => ({ ...prev, [platform]: normalized.value }));
                           setFollowErrors((prev) => ({ ...prev, [platform]: normalized.error ?? "" }));
@@ -356,9 +421,10 @@ export default function ProfilePage() {
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               onClick={saveWithValidation}
+              disabled={saving}
               className="inline-flex rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/30"
             >
-              Save draft
+              {saving ? "Saving..." : "Save profile"}
             </button>
             <Link
               href="/agreements"
@@ -381,6 +447,11 @@ export default function ProfilePage() {
               </Link>
             ) : null}
           </div>
+          <p className="mt-3 text-xs text-zinc-400">
+            Image fields are currently preview-only in this release. Save your text + follow links now; image hosting
+            will be wired next.
+          </p>
+          {saveError ? <p className="mt-2 text-xs font-semibold text-red-300">{saveError}</p> : null}
           {saved && <p className="mt-3 text-xs font-semibold text-emerald-300">Draft saved.</p>}
         </section>
       </main>
