@@ -36,6 +36,9 @@ export function UsersClient() {
   const [editRole, setEditRole] = useState(selectedUserRole);
   const [editStatus, setEditStatus] = useState<AccountStatus>(selectedUserStatus);
   const [notes, setNotes] = useState("");
+  const confirmationMatches = Boolean(
+    selectedUser && (confirmationText.trim() === "DELETE" || confirmationText.trim().toLowerCase() === selectedUser.email.toLowerCase()),
+  );
 
   const query = useMemo(() => {
     const params = new URLSearchParams();
@@ -47,7 +50,6 @@ export function UsersClient() {
 
   const loadUsers = async () => {
     setLoading(true);
-    setMessage(null);
     try {
       const response = await fetch(`/api/admin/users${query ? `?${query}` : ""}`, { cache: "no-store" });
       const result = (await response.json().catch(() => ({}))) as { ok?: boolean; users?: UserRow[]; error?: string };
@@ -70,7 +72,6 @@ export function UsersClient() {
 
   const loadUserDetail = async (userId: string) => {
     setSelectedUserId(userId);
-    setMessage(null);
     const response = await fetch(`/api/admin/users/${userId}`, { cache: "no-store" });
     const result = (await response.json().catch(() => ({}))) as { ok?: boolean; user?: UserRow; error?: string };
     if (!response.ok || !result.ok || !result.user) {
@@ -96,9 +97,9 @@ export function UsersClient() {
       setMessage(result.error ?? "Failed to save user.");
       return;
     }
-    setMessage("User updated.");
     await loadUsers();
     await loadUserDetail(selectedUserId);
+    setMessage("User updated.");
   };
 
   const applyDangerAction = async () => {
@@ -117,11 +118,11 @@ export function UsersClient() {
       setMessage(result.error ?? "Dangerous action failed.");
       return;
     }
-    setMessage(result.message ?? "Action completed.");
-    setDangerAction(null);
-    setConfirmationText("");
     await loadUsers();
     await loadUserDetail(selectedUserId);
+    setDangerAction(null);
+    setConfirmationText("");
+    setMessage(result.message ?? "Action completed.");
   };
 
   return (
@@ -280,8 +281,9 @@ export function UsersClient() {
                   />
                   <div className="flex gap-2">
                     <button
+                      disabled={!confirmationMatches}
                       onClick={() => void applyDangerAction()}
-                      className="rounded-lg border border-red-500/40 bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-200"
+                      className="rounded-lg border border-red-500/40 bg-red-500/20 px-3 py-1.5 text-xs font-semibold text-red-200 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       Confirm {dangerAction}
                     </button>
