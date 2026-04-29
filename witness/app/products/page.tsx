@@ -11,6 +11,13 @@ const filters = ["All", "Official", "Creator Profiles", "Rights Acquired"] as co
 type FilterOption = (typeof filters)[number];
 type ProductSize = "S" | "M" | "L" | "XL" | "XXL";
 type ProductColor = "Black" | "White" | "Emerald" | "Charcoal";
+type CreatorCard = {
+  screenName: string;
+  displayName: string;
+  tagline: string;
+  bio: string;
+  avatarUrl: string;
+};
 
 const SIZE_ADJUSTMENTS: Record<ProductSize, number> = {
   S: 0,
@@ -33,6 +40,8 @@ export default function ProductsPage() {
   const [selectedSizes, setSelectedSizes] = useState<Record<number, ProductSize>>({});
   const [selectedColors, setSelectedColors] = useState<Record<number, ProductColor>>({});
   const [lastAddedDesignId, setLastAddedDesignId] = useState<number | null>(null);
+  const [creatorCards, setCreatorCards] = useState<CreatorCard[]>([]);
+  const [creatorsLoading, setCreatorsLoading] = useState(true);
   const { items, addToCart, subtotal, itemCount } = useCart();
   const [ordersEnabled, setOrdersEnabled] = useState(true);
   const [submissionsEnabled, setSubmissionsEnabled] = useState(true);
@@ -58,6 +67,33 @@ export default function ProductsPage() {
           setOrdersEnabled(true);
           setSubmissionsEnabled(true);
           setMaintenanceMode(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/creators", { cache: "no-store" });
+        const result = (await response.json().catch(() => ({}))) as {
+          ok?: boolean;
+          creators?: CreatorCard[];
+        };
+        if (!cancelled && response.ok && result.ok) {
+          setCreatorCards(Array.isArray(result.creators) ? result.creators : []);
+        }
+      } catch {
+        if (!cancelled) {
+          setCreatorCards([]);
+        }
+      } finally {
+        if (!cancelled) {
+          setCreatorsLoading(false);
         }
       }
     })();
@@ -96,6 +132,25 @@ export default function ProductsPage() {
         design.agreementType === "One-Time",
     );
   }, [selectedCreator, selectedFilter]);
+
+  const visibleCreatorCards = useMemo(() => {
+    const approvedCreatorNames = new Set(creatorOptions.filter((name) => name !== "All Authors"));
+    const apiCards = creatorCards.filter(
+      (creator) => approvedCreatorNames.has(creator.screenName) || approvedCreatorNames.has(creator.displayName),
+    );
+
+    if (apiCards.length > 0) {
+      return apiCards;
+    }
+
+    return Array.from(approvedCreatorNames).map((name) => ({
+      screenName: name,
+      displayName: name,
+      tagline: "",
+      bio: "",
+      avatarUrl: "",
+    }));
+  }, [creatorCards, creatorOptions]);
 
   const getSelectedSize = (designId: number): ProductSize => selectedSizes[designId] ?? "M";
   const getSelectedColor = (designId: number): ProductColor => selectedColors[designId] ?? "Black";
@@ -175,6 +230,44 @@ export default function ProductsPage() {
                 <p className="mt-1 text-sm text-zinc-300">
                   Select an IP author to browse designs associated with that creator profile.
                 </p>
+                <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                  {visibleCreatorCards.map((creator) => (
+                    <Link
+                      key={creator.screenName}
+                      href={`/creators/${encodeURIComponent(creator.screenName)}`}
+                      className="group rounded-xl border border-zinc-700 bg-zinc-950/70 p-3 transition-colors hover:border-emerald-500/40"
+                    >
+                      <div className="flex items-center gap-3">
+                        <div className="relative h-11 w-11 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-900">
+                          {creator.avatarUrl ? (
+                            <Image
+                              src={creator.avatarUrl}
+                              alt={`${creator.displayName} avatar`}
+                              fill
+                              className="object-cover"
+                              sizes="44px"
+                            />
+                          ) : (
+                            <div className="flex h-full w-full items-center justify-center text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
+                              {creator.displayName.slice(0, 2)}
+                            </div>
+                          )}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-semibold text-zinc-100 group-hover:text-emerald-300">
+                            {creator.displayName}
+                          </p>
+                          <p className="truncate text-xs text-zinc-400">
+                            {creator.tagline || creator.bio || "View creator profile"}
+                          </p>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                  {!creatorsLoading && visibleCreatorCards.length === 0 && (
+                    <p className="text-sm text-zinc-400">No creator profiles are available yet.</p>
+                  )}
+                </div>
                 <div className="mt-3 flex flex-wrap gap-2">
                   {creatorOptions.map((creator) => (
                     <button
