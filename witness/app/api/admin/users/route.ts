@@ -32,5 +32,10 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: error.message }, { status: 500 });
   }
 
-  return NextResponse.json({ ok: true, users: data ?? [] });
+  const users = ((data ?? []) as Array<Record<string, unknown>>).map((row) => ({
+    ...row,
+    total_spent: typeof row.total_spent === "number" ? row.total_spent : 0,
+  }));
+
+  return NextResponse.json({ ok: true, users });
 }

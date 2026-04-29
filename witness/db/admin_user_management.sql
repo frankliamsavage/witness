@@ -90,6 +90,38 @@ begin
 end;
 $$;
 
+create or replace function public.get_total_spent_for_user(p_user_id uuid)
+returns numeric
+language plpgsql
+security definer
+stable
+set search_path = public, auth
+as $$
+declare
+  total_spent numeric := 0;
+begin
+  if to_regclass('public.orders') is not null then
+    if exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public' and table_name = 'orders' and column_name = 'total_amount'
+    ) then
+      execute 'select coalesce(sum(total_amount), 0)::numeric from public.orders where user_id = $1' into total_spent using p_user_id;
+    elsif exists (
+      select 1
+      from information_schema.columns
+      where table_schema = 'public' and table_name = 'orders' and column_name = 'total'
+    ) then
+      execute 'select coalesce(sum(total), 0)::numeric from public.orders where user_id = $1' into total_spent using p_user_id;
+    end if;
+  end if;
+
+  return coalesce(total_spent, 0);
+end;
+$$;
+
+grant execute on function public.get_total_spent_for_user(uuid) to authenticated;
+
 create or replace function public.admin_list_users(
   p_search text default null,
   p_status text default null,
@@ -104,7 +136,8 @@ returns table (
   created_at timestamptz,
   last_login_at timestamptz,
   order_count integer,
-  submission_count integer
+  submission_count integer,
+  total_spent numeric
 )
 language sql
 security definer
@@ -119,7 +152,8 @@ as $$
     u.created_at,
     u.last_sign_in_at as last_login_at,
     public.get_order_count_for_user(u.id) as order_count,
-    public.get_submission_count_for_user(u.id) as submission_count
+    public.get_submission_count_for_user(u.id) as submission_count,
+    public.get_total_spent_for_user(u.id) as total_spent
   from auth.users u
   left join public.user_admin_state s on s.user_id = u.id
   where public.is_admin_user(auth.uid())
@@ -151,6 +185,8 @@ returns table (
   last_login_at timestamptz,
   order_count integer,
   submission_count integer,
+  total_spent numeric,
+  phone_number text,
   admin_notes text
 )
 language sql
@@ -167,6 +203,11 @@ as $$
     u.last_sign_in_at as last_login_at,
     public.get_order_count_for_user(u.id) as order_count,
     public.get_submission_count_for_user(u.id) as submission_count,
+    public.get_total_spent_for_user(u.id) as total_spent,
+    coalesce(
+      nullif(u.raw_user_meta_data->>'phone', ''),
+      nullif(u.raw_user_meta_data->>'shipping_phone', '')
+    ) as phone_number,
     s.admin_notes
   from auth.users u
   left join public.user_admin_state s on s.user_id = u.id
@@ -321,3 +362,108 @@ end;
 $$;
 
 grant execute on function public.admin_apply_dangerous_action(uuid, text, text) to authenticated;
+
+create or replace function public.admin_get_user_shipping_address(p_target_user_id uuid)
+returns table (
+  recipient_name text,
+  line1 text,
+  line2 text,
+  city text,
+  state text,
+  postal_code text,
+  country text,
+  phone_number text
+)
+language sql
+security definer
+set search_path = public, auth
+as $$
+  select
+    coalesce(
+      nullif(u.raw_user_meta_data->>'full_name', ''),
+      nullif(u.raw_user_meta_data->>'screen_name', '')
+    ) as recipient_name,
+    nullif(u.raw_user_meta_data->>'shipping_address', '') as line1,
+    nullif(u.raw_user_meta_data->>'shipping_address_2', '') as line2,
+    nullif(u.raw_user_meta_data->>'shipping_city', '') as city,
+    nullif(u.raw_user_meta_data->>'shipping_state', '') as state,
+    nullif(u.raw_user_meta_data->>'shipping_zip', '') as postal_code,
+    coalesce(nullif(u.raw_user_meta_data->>'shipping_country', ''), 'US') as country,
+    coalesce(nullif(u.raw_user_meta_data->>'shipping_phone', ''), nullif(u.raw_user_meta_data->>'phone', '')) as phone_number
+  from auth.users u
+  where public.is_admin_user(auth.uid()) and u.id = p_target_user_id
+$$;
+
+grant execute on function public.admin_get_user_shipping_address(uuid) to authenticated;
+
+create or replace function public.admin_get_user_purchases(
+  p_target_user_id uuid,
+  p_limit integer default 20
+)
+returns table (
+  order_id text,
+  order_number text,
+  order_date timestamptz,
+  order_status text,
+  payment_status text,
+  item_count integer,
+  order_total numeric,
+  shipping_summary text
+)
+language plpgsql
+security definer
+stable
+set search_path = public, auth
+as $$
+begin
+  if not public.is_admin_user(auth.uid()) then
+    raise exception 'Admin access required';
+  end if;
+
+  if to_regclass('public.orders') is null then
+    return;
+  end if;
+
+  if exists (
+    select 1
+    from information_schema.columns
+    where table_schema = 'public' and table_name = 'orders' and column_name = 'total_amount'
+  ) then
+    return query execute $sql$
+      select
+        o.id::text as order_id,
+        coalesce(nullif(o.order_number::text, ''), o.id::text) as order_number,
+        o.created_at as order_date,
+        coalesce(o.status::text, 'unknown') as order_status,
+        coalesce(o.payment_status::text, 'unknown') as payment_status,
+        coalesce(o.item_count, 0) as item_count,
+        coalesce(o.total_amount, 0)::numeric as order_total,
+        concat_ws(', ', nullif(o.shipping_address, ''), nullif(o.shipping_city, ''), nullif(o.shipping_state, ''), nullif(o.shipping_zip, '')) as shipping_summary
+      from public.orders o
+      where o.user_id = $1
+      order by o.created_at desc
+      limit $2
+    $sql$
+    using p_target_user_id, greatest(coalesce(p_limit, 20), 1);
+  else
+    return query execute $sql$
+      select
+        o.id::text as order_id,
+        coalesce(nullif(o.order_number::text, ''), o.id::text) as order_number,
+        o.created_at as order_date,
+        coalesce(o.status::text, 'unknown') as order_status,
+        coalesce(o.payment_status::text, 'unknown') as payment_status,
+        coalesce(o.item_count, 0) as item_count,
+        coalesce(o.total, 0)::numeric as order_total,
+        concat_ws(', ', nullif(o.shipping_address, ''), nullif(o.shipping_city, ''), nullif(o.shipping_state, ''), nullif(o.shipping_zip, '')) as shipping_summary
+      from public.orders o
+      where o.user_id = $1
+      order by o.created_at desc
+      limit $2
+    $sql$
+    using p_target_user_id, greatest(coalesce(p_limit, 20), 1);
+  end if;
+end;
+$$;
+
+grant execute on function public.admin_get_user_purchases(uuid, integer) to authenticated;
