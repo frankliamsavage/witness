@@ -183,12 +183,13 @@ export default function ProductsPage() {
       return approvedDesigns.filter((design) => design.contentType === "official");
     }
     if (selectedFilter === "Creator Profiles") {
+      const creatorLinkedDesigns = approvedDesigns.filter((design) => design.contentType === "user-submitted");
       const effectiveCreator =
         selectedCreator === "all" && creatorTab === "Creator Info" ? (selectedCreatorCard?.screenName ?? "all") : selectedCreator;
-      if (effectiveCreator === "all") return approvedDesigns;
+      if (effectiveCreator === "all") return creatorLinkedDesigns;
       const activeCreator = visibleCreatorCards.find((creator) => creator.screenName === effectiveCreator);
-      if (!activeCreator) return approvedDesigns;
-      return approvedDesigns.filter(
+      if (!activeCreator) return creatorLinkedDesigns;
+      return creatorLinkedDesigns.filter(
         (design) => design.creator === activeCreator.screenName || design.creator === activeCreator.displayName,
       );
     }
@@ -711,10 +712,10 @@ export default function ProductsPage() {
                 {selectedFilter === "Creator Profiles" ? (
                   <>
                     <p className="mt-2 text-sm text-zinc-300">
-                      No approved designs are available for this creator yet.
+                      Select a creator to browse their designs.
                     </p>
                     <p className="mt-2 text-sm text-zinc-400">
-                      Creator profile matching appears here once their designs are approved.
+                      Only creator-linked products appear in this section.
                     </p>
                   </>
                 ) : selectedFilter === "Rights Acquired" ? (
