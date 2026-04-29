@@ -99,6 +99,8 @@ export default async function DashboardPage() {
   }
 
   const meta = user.user_metadata as UserMeta | null;
+  const roleNormalized = String(meta?.role ?? "").toLowerCase();
+  const isCreatorRole = roleNormalized === "creator" || roleNormalized === "admin";
   const { count: addressCount } = await supabase
     .from("user_addresses")
     .select("id", { head: true, count: "exact" })
@@ -131,7 +133,7 @@ export default async function DashboardPage() {
             ) : null}
             . Submissions and royalty tools will connect here as those features go live.
           </p>
-          {meta?.role === "Creator" && (
+          {isCreatorRole && (
             <div className="mt-4 flex flex-wrap gap-3">
               {submissionsEnabled ? (
                 <Link
@@ -175,12 +177,18 @@ export default async function DashboardPage() {
             <h2 className="text-lg font-semibold text-emerald-300">Submissions</h2>
             <p className="mt-2 text-sm text-zinc-300">Track pending, approved, and rejected design submissions.</p>
             <p className="mt-4">
-              <Link
-                href="/submitted-designs"
-                className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
-              >
-                Open submissions
-              </Link>
+              {isCreatorRole ? (
+                <Link
+                  href="/submitted-designs"
+                  className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                >
+                  Open submissions
+                </Link>
+              ) : (
+                <span className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-500">
+                  Creator accounts only
+                </span>
+              )}
             </p>
           </article>
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
@@ -214,29 +222,35 @@ export default async function DashboardPage() {
             )}
           </article>
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
-            <h2 className="text-lg font-semibold text-emerald-300">Profile & Agreements</h2>
+            <h2 className="text-lg font-semibold text-emerald-300">{isCreatorRole ? "Profile & Agreements" : "Account Tools"}</h2>
             <p className="mt-2 text-sm text-zinc-300">
-              Manage creator profile, shipping details, contract type, and payment preferences.
+              {isCreatorRole
+                ? "Manage creator profile, shipping details, contract type, and payment preferences."
+                : "Manage shipping details and account resources."}
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
-              <Link
-                href="/profile"
-                className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
-              >
-                Profile
-              </Link>
+              {isCreatorRole && (
+                <Link
+                  href="/profile"
+                  className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                >
+                  Profile
+                </Link>
+              )}
               <Link
                 href="/account/addresses"
                 className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
               >
                 Address Book
               </Link>
-              <Link
-                href="/agreements"
-                className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
-              >
-                Agreements
-              </Link>
+              {isCreatorRole && (
+                <Link
+                  href="/agreements"
+                  className="inline-flex rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                >
+                  Agreements
+                </Link>
+              )}
             </div>
           </article>
         </section>

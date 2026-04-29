@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { createClient } from "@/lib/supabase/client";
 
 type FollowPlatform =
   | "youtube"
@@ -110,9 +112,11 @@ function normalizeFollowUrl(platform: FollowPlatform, value: string) {
 const STORAGE_KEY = "witness.creator.profile.draft";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const [visualsOpen, setVisualsOpen] = useState(true);
   const [bioOpen, setBioOpen] = useState(false);
   const [linksOpen, setLinksOpen] = useState(false);
+  const [canAccess, setCanAccess] = useState<boolean | null>(null);
 
   const [displayName, setDisplayName] = useState("FrankSavage");
   const [tagline, setTagline] = useState("No secrets. Just values.");
@@ -126,6 +130,29 @@ export default function ProfilePage() {
   const [followLinks, setFollowLinks] = useState<FollowLinks>(EMPTY_FOLLOW_LINKS);
   const [followErrors, setFollowErrors] = useState<Partial<Record<FollowPlatform, string>>>({});
   const [saved, setSaved] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const supabase = createClient();
+        const { data } = await supabase.auth.getUser();
+        const role = String((data.user?.user_metadata as { role?: string } | undefined)?.role ?? "").toLowerCase();
+        const isCreator = role === "creator" || role === "admin";
+        if (cancelled) return;
+        if (!data.user || !isCreator) {
+          router.replace("/dashboard");
+          return;
+        }
+        setCanAccess(true);
+      } catch {
+        if (!cancelled) router.replace("/dashboard");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   useEffect(() => {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -148,6 +175,18 @@ export default function ProfilePage() {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  if (canAccess !== true) {
+    return (
+      <div className="min-h-screen bg-zinc-950 text-zinc-100">
+        <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-6 py-20 sm:px-10">
+          <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+            <p className="text-sm text-zinc-300">Checking creator access...</p>
+          </section>
+        </main>
+      </div>
+    );
+  }
 
   const onImageSelect = (
     e: React.ChangeEvent<HTMLInputElement>,
