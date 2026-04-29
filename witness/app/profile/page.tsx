@@ -21,6 +21,9 @@ type CreatorProfile = {
   bio: string;
   mission: string;
   follow_links: Partial<FollowLinks>;
+  avatar_url?: string;
+  banner_url?: string;
+  background_url?: string;
 };
 
 type LocalDraft = {
@@ -30,6 +33,9 @@ type LocalDraft = {
   bio?: string;
   mission?: string;
   follow_links?: Partial<FollowLinks>;
+  avatar_url?: string;
+  banner_url?: string;
+  background_url?: string;
 };
 
 const LOCAL_PROFILE_DRAFT_KEY = "witness.creator.profile.v2.draft";
@@ -37,6 +43,37 @@ const LOCAL_PROFILE_DRAFT_KEY = "witness.creator.profile.v2.draft";
 export default function ProfilePage() {
   const router = useRouter();
   const dirtyRef = useRef(false);
+  const fileToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(String(reader.result ?? ""));
+      reader.onerror = () => reject(new Error("Failed to read image file."));
+      reader.readAsDataURL(file);
+    });
+  const compressImageToDataUrl = async (file: File) => {
+    const objectUrl = URL.createObjectURL(file);
+    try {
+      const image = new Image();
+      image.src = objectUrl;
+      await new Promise<void>((resolve, reject) => {
+        image.onload = () => resolve();
+        image.onerror = () => reject(new Error("Unsupported image format."));
+      });
+      const maxDimension = 1400;
+      const scale = Math.min(1, maxDimension / Math.max(image.width, image.height));
+      const width = Math.max(1, Math.round(image.width * scale));
+      const height = Math.max(1, Math.round(image.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) throw new Error("Unable to process image.");
+      ctx.drawImage(image, 0, 0, width, height);
+      return canvas.toDataURL("image/jpeg", 0.82);
+    } finally {
+      URL.revokeObjectURL(objectUrl);
+    }
+  };
   const [visualsOpen, setVisualsOpen] = useState(true);
   const [bioOpen, setBioOpen] = useState(false);
   const [linksOpen, setLinksOpen] = useState(false);
@@ -56,6 +93,7 @@ export default function ProfilePage() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [processingImage, setProcessingImage] = useState(false);
   const [screenName, setScreenName] = useState("");
 
   useEffect(() => {
@@ -94,6 +132,9 @@ export default function ProfilePage() {
             if (typeof parsed.tagline === "string") setTagline(parsed.tagline);
             if (typeof parsed.bio === "string") setBio(parsed.bio);
             if (typeof parsed.mission === "string") setMission(parsed.mission);
+            if (typeof parsed.avatar_url === "string") setProfileImage(parsed.avatar_url);
+            if (typeof parsed.banner_url === "string") setBannerImage(parsed.banner_url);
+            if (typeof parsed.background_url === "string") setBackgroundImage(parsed.background_url);
             if (parsed.follow_links) {
               const localNormalized = normalizeFollowLinks(parsed.follow_links);
               setFollowLinks(localNormalized.links);
@@ -113,6 +154,9 @@ export default function ProfilePage() {
         setTagline(result.profile.tagline ?? "");
         setBio(result.profile.bio ?? "");
         setMission(result.profile.mission ?? "");
+        setProfileImage(result.profile.avatar_url ?? null);
+        setBannerImage(result.profile.banner_url ?? null);
+        setBackgroundImage(result.profile.background_url ?? null);
         const normalized = normalizeFollowLinks(result.profile.follow_links ?? {});
         setFollowLinks(normalized.links);
       } catch {
@@ -136,13 +180,28 @@ export default function ProfilePage() {
     );
   }
 
-  const onImageSelect = (
+  const onImageSelect = async (
     e: React.ChangeEvent<HTMLInputElement>,
     setImage: (value: string | null) => void,
   ) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setImage(URL.createObjectURL(file));
+    const mime = String(file.type || "").toLowerCase();
+    if (mime.includes("heic") || mime.includes("heif")) {
+      setSaveError("HEIC/HEIF files are not supported in-browser. Please use PNG, JPG, or WEBP.");
+      return;
+    }
+    try {
+      setProcessingImage(true);
+      setSaveError(null);
+      dirtyRef.current = true;
+      const dataUrl = file.size > 1024 * 1024 ? await compressImageToDataUrl(file) : await fileToDataUrl(file);
+      setImage(dataUrl);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : "Unable to read image.");
+    } finally {
+      setProcessingImage(false);
+    }
   };
 
   const saveDraft = () => {
@@ -153,6 +212,9 @@ export default function ProfilePage() {
       bio,
       mission,
       follow_links: followLinks,
+      avatar_url: profileImage ?? "",
+      banner_url: bannerImage ?? "",
+      background_url: backgroundImage ?? "",
     };
     localStorage.setItem(LOCAL_PROFILE_DRAFT_KEY, JSON.stringify(draft));
     setSaved(true);
@@ -183,6 +245,9 @@ export default function ProfilePage() {
           bio,
           mission,
           follow_links: normalized.links,
+          avatar_url: profileImage ?? "",
+          banner_url: bannerImage ?? "",
+          background_url: backgroundImage ?? "",
         }),
       });
       if (!response.ok) {
@@ -255,7 +320,7 @@ export default function ProfilePage() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => onImageSelect(e, setProfileImage)}
+                    onChange={(e) => void onImageSelect(e, setProfileImage)}
                     className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/20 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-emerald-300"
                   />
                   <div className="h-24 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950/80">
@@ -267,7 +332,7 @@ export default function ProfilePage() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => onImageSelect(e, setBannerImage)}
+                    onChange={(e) => void onImageSelect(e, setBannerImage)}
                     className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/20 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-emerald-300"
                   />
                   <div className="h-24 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950/80">
@@ -279,7 +344,7 @@ export default function ProfilePage() {
                   <input
                     type="file"
                     accept="image/*"
-                    onChange={(e) => onImageSelect(e, setBackgroundImage)}
+                    onChange={(e) => void onImageSelect(e, setBackgroundImage)}
                     className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs text-zinc-200 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/20 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-emerald-300"
                   />
                   <div className="h-24 overflow-hidden rounded-lg border border-zinc-700 bg-zinc-950/80">
@@ -421,10 +486,10 @@ export default function ProfilePage() {
           <div className="mt-4 flex flex-wrap gap-3">
             <button
               onClick={saveWithValidation}
-              disabled={saving}
+              disabled={saving || processingImage}
               className="inline-flex rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/30"
             >
-              {saving ? "Saving..." : "Save profile"}
+              {processingImage ? "Processing image..." : saving ? "Saving..." : "Save profile"}
             </button>
             <Link
               href="/agreements"
@@ -447,10 +512,7 @@ export default function ProfilePage() {
               </Link>
             ) : null}
           </div>
-          <p className="mt-3 text-xs text-zinc-400">
-            Image fields are currently preview-only in this release. Save your text + follow links now; image hosting
-            will be wired next.
-          </p>
+          <p className="mt-3 text-xs text-zinc-400">Save to publish text, links, and images to your public profile.</p>
           {saveError ? <p className="mt-2 text-xs font-semibold text-red-300">{saveError}</p> : null}
           {saved && <p className="mt-3 text-xs font-semibold text-emerald-300">Draft saved.</p>}
         </section>

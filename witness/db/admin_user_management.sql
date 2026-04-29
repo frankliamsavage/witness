@@ -64,9 +64,16 @@ create table if not exists public.creator_profiles (
   bio text null,
   mission text null,
   follow_links jsonb not null default '{}'::jsonb,
+  avatar_url text null,
+  banner_url text null,
+  background_url text null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.creator_profiles add column if not exists avatar_url text null;
+alter table public.creator_profiles add column if not exists banner_url text null;
+alter table public.creator_profiles add column if not exists background_url text null;
 
 create unique index if not exists user_addresses_one_default_per_user
   on public.user_addresses (user_id)

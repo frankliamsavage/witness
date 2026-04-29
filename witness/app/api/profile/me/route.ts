@@ -8,11 +8,24 @@ type ProfilePayload = {
   bio?: string;
   mission?: string;
   follow_links?: Partial<FollowLinks>;
+  avatar_url?: string;
+  banner_url?: string;
+  background_url?: string;
 };
 
 function isCreatorRole(role: string | undefined) {
   const normalized = String(role ?? "").toLowerCase();
   return normalized === "creator" || normalized === "admin";
+}
+
+function normalizeImageUrl(value: unknown) {
+  const raw = String(value ?? "").trim();
+  if (!raw) return "";
+  const isHttp = /^https?:\/\//i.test(raw);
+  const isDataImage = /^data:image\/[a-zA-Z0-9.+-]+;base64,/.test(raw);
+  if (!isHttp && !isDataImage) return null;
+  if (raw.length > 5_000_000) return null;
+  return raw;
 }
 
 export async function GET() {
@@ -39,6 +52,9 @@ export async function GET() {
       bio: "",
       mission: "",
       follow_links: {},
+      avatar_url: "",
+      banner_url: "",
+      background_url: "",
     },
   });
 }
@@ -64,6 +80,12 @@ export async function PATCH(request: Request) {
   if (!screenName) {
     return NextResponse.json({ ok: false, error: "Missing screen name in account metadata." }, { status: 400 });
   }
+  const avatarUrl = normalizeImageUrl(body.avatar_url);
+  const bannerUrl = normalizeImageUrl(body.banner_url);
+  const backgroundUrl = normalizeImageUrl(body.background_url);
+  if (avatarUrl === null || bannerUrl === null || backgroundUrl === null) {
+    return NextResponse.json({ ok: false, error: "Invalid image format or image too large." }, { status: 400 });
+  }
 
   const payload = {
     user_id: user.id,
@@ -73,6 +95,9 @@ export async function PATCH(request: Request) {
     bio: String(body.bio ?? "").trim(),
     mission: String(body.mission ?? "").trim(),
     follow_links: links,
+    avatar_url: avatarUrl,
+    banner_url: bannerUrl,
+    background_url: backgroundUrl,
   };
 
   const { data, error } = await supabase

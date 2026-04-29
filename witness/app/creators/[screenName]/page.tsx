@@ -11,6 +11,9 @@ type CreatorProfile = {
   bio: string | null;
   mission: string | null;
   follow_links: Partial<FollowLinks> | null;
+  avatar_url: string | null;
+  banner_url: string | null;
+  background_url: string | null;
 };
 
 export async function generateMetadata({
@@ -35,7 +38,7 @@ export default async function PublicCreatorProfilePage({
 
   const { data, error } = await supabase
     .from("creator_profiles")
-    .select("screen_name,display_name,tagline,bio,mission,follow_links")
+    .select("screen_name,display_name,tagline,bio,mission,follow_links,avatar_url,banner_url,background_url")
     .eq("screen_name", screenName)
     .maybeSingle();
   if (error) {
@@ -52,14 +55,47 @@ export default async function PublicCreatorProfilePage({
     .filter((entry) => entry.value);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100">
+    <div
+      className="min-h-screen bg-zinc-950 text-zinc-100"
+      style={
+        profile.background_url
+          ? {
+              backgroundImage: `linear-gradient(rgba(9,9,11,0.92), rgba(9,9,11,0.92)), url("${profile.background_url}")`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+            }
+          : undefined
+      }
+    >
       <main className="mx-auto flex w-full max-w-5xl flex-col gap-8 px-6 py-16 sm:px-10 lg:px-16">
-        <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-8 shadow-2xl shadow-emerald-500/10 sm:p-12">
+        <section
+          className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-8 shadow-2xl shadow-emerald-500/10 sm:p-12"
+          style={
+            profile.banner_url
+              ? {
+                  backgroundImage: `linear-gradient(rgba(24,24,27,0.88), rgba(9,9,11,0.95)), url("${profile.banner_url}")`,
+                  backgroundSize: "cover",
+                  backgroundPosition: "center",
+                }
+              : undefined
+          }
+        >
           <p className="mb-4 inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
             Creator Portfolio
           </p>
-          <h1 className="text-3xl font-bold text-zinc-50 sm:text-4xl">{profile.display_name || profile.screen_name}</h1>
-          <p className="mt-2 text-sm text-zinc-400">@{profile.screen_name}</p>
+          <div className="flex items-start gap-4">
+            {profile.avatar_url ? (
+              <img
+                src={profile.avatar_url}
+                alt={`${profile.display_name || profile.screen_name} avatar`}
+                className="h-16 w-16 rounded-xl border border-zinc-700 object-cover"
+              />
+            ) : null}
+            <div>
+              <h1 className="text-3xl font-bold text-zinc-50 sm:text-4xl">{profile.display_name || profile.screen_name}</h1>
+              <p className="mt-2 text-sm text-zinc-400">@{profile.screen_name}</p>
+            </div>
+          </div>
           {profile.tagline ? <p className="mt-3 text-base text-emerald-300">{profile.tagline}</p> : null}
 
           {followEntries.length > 0 && (
