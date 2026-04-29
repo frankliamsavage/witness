@@ -3,7 +3,109 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 
-type LinkItem = { label: string; url: string };
+type FollowPlatform =
+  | "youtube"
+  | "tiktok"
+  | "twitch"
+  | "instagram"
+  | "facebook"
+  | "x"
+  | "discord"
+  | "website"
+  | "kick"
+  | "threads"
+  | "patreon";
+
+type FollowLinks = Record<FollowPlatform, string>;
+
+const PLATFORM_LABELS: Record<FollowPlatform, string> = {
+  youtube: "YouTube",
+  tiktok: "TikTok",
+  twitch: "Twitch",
+  instagram: "Instagram",
+  facebook: "Facebook",
+  x: "X / Twitter",
+  discord: "Discord",
+  website: "Website",
+  kick: "Kick",
+  threads: "Threads",
+  patreon: "Patreon",
+};
+
+const PLATFORM_HELPERS: Partial<Record<FollowPlatform, string>> = {
+  youtube: "Channel URL or @handle",
+  tiktok: "@handle or handle",
+  twitch: "Handle or full URL",
+  instagram: "@handle or handle",
+  facebook: "Page URL or username",
+  x: "@handle or handle",
+  discord: "Invite code or full URL",
+  website: "https://your-site.com",
+};
+
+const EMPTY_FOLLOW_LINKS: FollowLinks = {
+  youtube: "",
+  tiktok: "",
+  twitch: "",
+  instagram: "",
+  facebook: "",
+  x: "",
+  discord: "",
+  website: "",
+  kick: "",
+  threads: "",
+  patreon: "",
+};
+
+function asHttpUrl(value: string) {
+  try {
+    const parsed = new URL(value);
+    if (parsed.protocol === "http:" || parsed.protocol === "https:") return parsed.toString();
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function normalizeHandle(value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return "";
+  return trimmed.replace(/^@+/, "");
+}
+
+function normalizeFollowUrl(platform: FollowPlatform, value: string) {
+  const trimmed = value.trim();
+  if (!trimmed) return { value: "", error: null };
+  const hasProtocol = /^https?:\/\//i.test(trimmed);
+
+  if (platform === "website") {
+    if (!hasProtocol) return { value: "", error: "Website must start with http:// or https://." };
+    const valid = asHttpUrl(trimmed);
+    return valid ? { value: valid, error: null } : { value: "", error: "Enter a valid website URL." };
+  }
+
+  if (hasProtocol) {
+    const valid = asHttpUrl(trimmed);
+    return valid ? { value: valid, error: null } : { value: "", error: `Enter a valid ${PLATFORM_LABELS[platform]} URL.` };
+  }
+
+  const handle = normalizeHandle(trimmed);
+  if (!handle) return { value: "", error: null };
+
+  const normalized: Record<Exclude<FollowPlatform, "website">, string> = {
+    youtube: handle.startsWith("channel/") || handle.startsWith("c/") ? `https://youtube.com/${handle}` : `https://youtube.com/@${handle}`,
+    tiktok: `https://tiktok.com/@${handle}`,
+    twitch: `https://twitch.tv/${handle}`,
+    instagram: `https://instagram.com/${handle}`,
+    facebook: `https://facebook.com/${handle}`,
+    x: `https://x.com/${handle}`,
+    discord: `https://discord.gg/${handle}`,
+    kick: `https://kick.com/${handle}`,
+    threads: `https://threads.net/@${handle}`,
+    patreon: `https://patreon.com/${handle}`,
+  };
+  return { value: normalized[platform as Exclude<FollowPlatform, "website">], error: null };
+}
 
 const STORAGE_KEY = "witness.creator.profile.draft";
 
@@ -21,11 +123,8 @@ export default function ProfilePage() {
   const [bannerImage, setBannerImage] = useState<string | null>(null);
   const [backgroundImage, setBackgroundImage] = useState<string | null>(null);
 
-  const [links, setLinks] = useState<LinkItem[]>([
-    { label: "Instagram", url: "" },
-    { label: "Website", url: "" },
-    { label: "Portfolio", url: "" },
-  ]);
+  const [followLinks, setFollowLinks] = useState<FollowLinks>(EMPTY_FOLLOW_LINKS);
+  const [followErrors, setFollowErrors] = useState<Partial<Record<FollowPlatform, string>>>({});
   const [saved, setSaved] = useState(false);
 
   useEffect(() => {
@@ -37,13 +136,13 @@ export default function ProfilePage() {
         tagline: string;
         bio: string;
         mission: string;
-        links: LinkItem[];
+        followLinks: FollowLinks;
       };
       setDisplayName(parsed.displayName ?? "FrankSavage");
       setTagline(parsed.tagline ?? "");
       setBio(parsed.bio ?? "");
       setMission(parsed.mission ?? "");
-      setLinks(parsed.links?.length ? parsed.links : links);
+      setFollowLinks(parsed.followLinks ? { ...EMPTY_FOLLOW_LINKS, ...parsed.followLinks } : EMPTY_FOLLOW_LINKS);
     } catch {
       // Keep defaults if local draft is malformed.
     }
@@ -67,11 +166,32 @@ export default function ProfilePage() {
         tagline,
         bio,
         mission,
-        links,
+        followLinks,
       }),
     );
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
+  };
+
+  const normalizedFollowEntries = (Object.keys(PLATFORM_LABELS) as FollowPlatform[])
+    .map((platform) => {
+      const normalized = normalizeFollowUrl(platform, followLinks[platform]);
+      return { platform, ...normalized };
+    })
+    .filter((entry) => entry.value);
+
+  const saveWithValidation = () => {
+    const nextErrors: Partial<Record<FollowPlatform, string>> = {};
+    const nextLinks: FollowLinks = { ...followLinks };
+    for (const platform of Object.keys(PLATFORM_LABELS) as FollowPlatform[]) {
+      const normalized = normalizeFollowUrl(platform, followLinks[platform]);
+      if (normalized.error) nextErrors[platform] = normalized.error;
+      nextLinks[platform] = normalized.value;
+    }
+    setFollowErrors(nextErrors);
+    setFollowLinks(nextLinks);
+    if (Object.keys(nextErrors).length) return;
+    saveDraft();
   };
 
   return (
@@ -89,6 +209,24 @@ export default function ProfilePage() {
             <p className="text-xs uppercase tracking-wide text-zinc-400">Live preview</p>
             <p className="mt-1 text-xl font-bold text-zinc-100">{displayName || "Your creator name"}</p>
             <p className="mt-1 text-sm text-emerald-300">{tagline || "Your tagline appears here"}</p>
+            {normalizedFollowEntries.length > 0 && (
+              <div className="mt-4">
+                <p className="text-xs font-semibold uppercase tracking-wide text-zinc-400">Follow This Creator</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {normalizedFollowEntries.map((entry) => (
+                    <a
+                      key={entry.platform}
+                      href={entry.value}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                    >
+                      {PLATFORM_LABELS[entry.platform]}
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </section>
 
@@ -209,7 +347,7 @@ export default function ProfilePage() {
 
           <article className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="text-lg font-semibold text-emerald-300">Public links</h2>
+              <h2 className="text-lg font-semibold text-emerald-300">Follow This Creator</h2>
               <button
                 onClick={() => setLinksOpen((v) => !v)}
                 className="rounded-lg border border-zinc-700 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
@@ -218,25 +356,36 @@ export default function ProfilePage() {
               </button>
             </div>
             <p className="mt-2 text-sm text-zinc-300">
-              Add social links, website links, and portfolio destinations to route traffic to your full ecosystem.
+              Add the places fans can follow you outside Witness.
             </p>
             {linksOpen && (
               <div className="mt-4 grid gap-3">
-                {links.map((link, index) => (
-                  <div key={link.label} className="grid gap-2 sm:grid-cols-[140px_1fr]">
+                {(Object.keys(PLATFORM_LABELS) as FollowPlatform[]).map((platform) => (
+                  <div key={platform} className="grid gap-2 sm:grid-cols-[140px_1fr]">
                     <span className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-xs font-semibold uppercase tracking-wide text-zinc-400">
-                      {link.label}
+                      {PLATFORM_LABELS[platform]}
                     </span>
-                    <input
-                      value={link.url}
-                      onChange={(e) =>
-                        setLinks((prev) =>
-                          prev.map((item, i) => (i === index ? { ...item, url: e.target.value } : item)),
-                        )
-                      }
-                      className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
-                      placeholder={`https://${link.label.toLowerCase()}.com/your-handle`}
-                    />
+                    <div className="grid gap-1">
+                      <input
+                        value={followLinks[platform]}
+                        onChange={(e) =>
+                          setFollowLinks((prev) => ({
+                            ...prev,
+                            [platform]: e.target.value,
+                          }))
+                        }
+                        onBlur={() => {
+                          const normalized = normalizeFollowUrl(platform, followLinks[platform]);
+                          setFollowLinks((prev) => ({ ...prev, [platform]: normalized.value }));
+                          setFollowErrors((prev) => ({ ...prev, [platform]: normalized.error ?? "" }));
+                        }}
+                        className="rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
+                        placeholder={PLATFORM_HELPERS[platform] ?? "Optional"}
+                      />
+                      {followErrors[platform] ? (
+                        <p className="text-xs text-red-300">{followErrors[platform]}</p>
+                      ) : null}
+                    </div>
                   </div>
                 ))}
               </div>
@@ -251,7 +400,7 @@ export default function ProfilePage() {
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
-              onClick={saveDraft}
+              onClick={saveWithValidation}
               className="inline-flex rounded-lg border border-emerald-500/40 bg-emerald-500/20 px-3 py-1.5 text-xs font-semibold text-emerald-200 transition-colors hover:bg-emerald-500/30"
             >
               Save draft
