@@ -60,7 +60,7 @@ export default async function PublicCreatorProfilePage({
       style={
         profile.background_url
           ? {
-              backgroundImage: `linear-gradient(rgba(9,9,11,0.92), rgba(9,9,11,0.92)), url("${profile.background_url}")`,
+              backgroundImage: `linear-gradient(rgba(9,9,11,0.65), rgba(9,9,11,0.72)), url("${profile.background_url}")`,
               backgroundSize: "cover",
               backgroundPosition: "center",
             }
@@ -73,7 +73,7 @@ export default async function PublicCreatorProfilePage({
           style={
             profile.banner_url
               ? {
-                  backgroundImage: `linear-gradient(rgba(24,24,27,0.88), rgba(9,9,11,0.95)), url("${profile.banner_url}")`,
+                  backgroundImage: `linear-gradient(rgba(24,24,27,0.42), rgba(9,9,11,0.62)), url("${profile.banner_url}")`,
                   backgroundSize: "cover",
                   backgroundPosition: "center",
                 }
