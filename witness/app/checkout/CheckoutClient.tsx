@@ -2,7 +2,7 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartContext";
 
 type InitialCustomer = {
@@ -15,11 +15,32 @@ type InitialCustomer = {
 };
 
 export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCustomer }) {
-  const { items, subtotal, clearCart } = useCart();
-  const [orderPlaced, setOrderPlaced] = useState(false);
+  const { items, subtotal } = useCart();
   const [processingPayment, setProcessingPayment] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const liveCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT !== "false";
+  const [stripePaymentsEnabled, setStripePaymentsEnabled] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/settings/public", { cache: "no-store" });
+        const result = (await response.json().catch(() => ({}))) as {
+          ok?: boolean;
+          stripe_payments_enabled?: boolean;
+        };
+        if (!cancelled && response.ok && result.ok) {
+          setStripePaymentsEnabled(result.stripe_payments_enabled !== false);
+        }
+      } catch {
+        if (!cancelled) setStripePaymentsEnabled(true);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -32,14 +53,14 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
           <p className="mt-3 text-sm text-zinc-300">
             Review your item, add your shipping details, and place the order.
           </p>
-          {!liveCheckoutEnabled && (
+          {(!liveCheckoutEnabled || !stripePaymentsEnabled) && (
             <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
-              Demo checkout only: no real payment is processed yet.
+              Payments are temporarily unavailable. Please check back soon.
             </p>
           )}
         </section>
 
-        {items.length === 0 && !orderPlaced && (
+        {items.length === 0 && (
           <section className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
             <p className="text-sm text-zinc-300">Your cart is empty. Add products before checkout.</p>
             <Link
@@ -68,7 +89,12 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
                 zip: String(data.get("zip") ?? ""),
               };
 
-              if (liveCheckoutEnabled) {
+              if (!liveCheckoutEnabled || !stripePaymentsEnabled) {
+                setErrorMessage("Payments are temporarily unavailable. Please check back soon.");
+                return;
+              }
+
+              if (liveCheckoutEnabled && stripePaymentsEnabled) {
                 setProcessingPayment(true);
                 try {
                   const response = await fetch("/api/checkout", {
@@ -98,8 +124,6 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
                 }
               }
 
-              clearCart();
-              setOrderPlaced(true);
             }}
           >
             <h2 className="text-xl font-semibold text-emerald-300">Customer info</h2>
@@ -183,14 +207,14 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
 
             <button
               type="submit"
-              disabled={items.length === 0 || processingPayment}
+              disabled={items.length === 0 || processingPayment || !liveCheckoutEnabled || !stripePaymentsEnabled}
               className="mobile-touch-target mt-5 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {liveCheckoutEnabled
+              {liveCheckoutEnabled && stripePaymentsEnabled
                 ? processingPayment
                   ? "Starting Payment..."
                   : "Proceed to Secure Payment"
-                : "Submit Test Order"}
+                : "Payments Unavailable"}
             </button>
             {errorMessage && (
               <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-200">
@@ -231,16 +255,6 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
           </aside>
         </section>
 
-        {orderPlaced && (
-          <section className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-4">
-            <p className="text-sm font-semibold text-emerald-300">
-              Thank you! This is a demo.
-            </p>
-            <p className="mt-1 text-sm text-zinc-100">
-              No charge was made. Orders are coming soon and live payments are not enabled yet.
-            </p>
-          </section>
-        )}
       </main>
     </div>
   );

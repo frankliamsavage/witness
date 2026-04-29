@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
+import { getSiteSetting } from "@/lib/site-settings";
 
 type CheckoutItem = {
   name: string;
@@ -23,10 +24,11 @@ export async function POST(request: Request) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const liveEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT !== "false";
+  const stripePaymentsEnabled = await getSiteSetting("stripe_payments_enabled");
 
-  if (!liveEnabled || !stripeSecretKey) {
+  if (!liveEnabled || !stripeSecretKey || !stripePaymentsEnabled) {
     return NextResponse.json(
-      { ok: false, error: "Live checkout is not enabled or Stripe key is missing." },
+      { ok: false, error: "Payments are temporarily unavailable. Please check back soon." },
       { status: 503 },
     );
   }
