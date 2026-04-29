@@ -56,6 +56,18 @@ create table if not exists public.checkout_sessions (
   updated_at timestamptz not null default now()
 );
 
+create table if not exists public.creator_profiles (
+  user_id uuid primary key references auth.users(id) on delete cascade,
+  screen_name text not null unique,
+  display_name text not null,
+  tagline text null,
+  bio text null,
+  mission text null,
+  follow_links jsonb not null default '{}'::jsonb,
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
 create unique index if not exists user_addresses_one_default_per_user
   on public.user_addresses (user_id)
   where is_default = true;
@@ -80,10 +92,16 @@ create trigger checkout_sessions_touch_updated_at
 before update on public.checkout_sessions
 for each row execute function public.touch_updated_at();
 
+drop trigger if exists creator_profiles_touch_updated_at on public.creator_profiles;
+create trigger creator_profiles_touch_updated_at
+before update on public.creator_profiles
+for each row execute function public.touch_updated_at();
+
 alter table public.user_admin_state enable row level security;
 alter table public.admin_audit_log enable row level security;
 alter table public.user_addresses enable row level security;
 alter table public.checkout_sessions enable row level security;
+alter table public.creator_profiles enable row level security;
 
 drop policy if exists user_addresses_select_own on public.user_addresses;
 create policy user_addresses_select_own on public.user_addresses
@@ -104,6 +122,18 @@ for delete to authenticated using (auth.uid() = user_id);
 drop policy if exists checkout_sessions_none on public.checkout_sessions;
 create policy checkout_sessions_none on public.checkout_sessions
 for all to authenticated using (false) with check (false);
+
+drop policy if exists creator_profiles_public_read on public.creator_profiles;
+create policy creator_profiles_public_read on public.creator_profiles
+for select to anon, authenticated using (true);
+
+drop policy if exists creator_profiles_owner_insert on public.creator_profiles;
+create policy creator_profiles_owner_insert on public.creator_profiles
+for insert to authenticated with check (auth.uid() = user_id);
+
+drop policy if exists creator_profiles_owner_update on public.creator_profiles;
+create policy creator_profiles_owner_update on public.creator_profiles
+for update to authenticated using (auth.uid() = user_id) with check (auth.uid() = user_id);
 
 drop policy if exists user_admin_state_read_none on public.user_admin_state;
 create policy user_admin_state_read_none on public.user_admin_state

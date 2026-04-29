@@ -4,112 +4,24 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import {
+  EMPTY_FOLLOW_LINKS,
+  PLATFORM_HELPERS,
+  PLATFORM_LABELS,
+  normalizeFollowLinks,
+  normalizeFollowUrl,
+  type FollowLinks,
+  type FollowPlatform,
+} from "@/lib/creator-follow";
 
-type FollowPlatform =
-  | "youtube"
-  | "tiktok"
-  | "twitch"
-  | "instagram"
-  | "facebook"
-  | "x"
-  | "discord"
-  | "website"
-  | "kick"
-  | "threads"
-  | "patreon";
-
-type FollowLinks = Record<FollowPlatform, string>;
-
-const PLATFORM_LABELS: Record<FollowPlatform, string> = {
-  youtube: "YouTube",
-  tiktok: "TikTok",
-  twitch: "Twitch",
-  instagram: "Instagram",
-  facebook: "Facebook",
-  x: "X / Twitter",
-  discord: "Discord",
-  website: "Website",
-  kick: "Kick",
-  threads: "Threads",
-  patreon: "Patreon",
+type CreatorProfile = {
+  screen_name: string;
+  display_name: string;
+  tagline: string;
+  bio: string;
+  mission: string;
+  follow_links: Partial<FollowLinks>;
 };
-
-const PLATFORM_HELPERS: Partial<Record<FollowPlatform, string>> = {
-  youtube: "Channel URL or @handle",
-  tiktok: "@handle or handle",
-  twitch: "Handle or full URL",
-  instagram: "@handle or handle",
-  facebook: "Page URL or username",
-  x: "@handle or handle",
-  discord: "Invite code or full URL",
-  website: "https://your-site.com",
-};
-
-const EMPTY_FOLLOW_LINKS: FollowLinks = {
-  youtube: "",
-  tiktok: "",
-  twitch: "",
-  instagram: "",
-  facebook: "",
-  x: "",
-  discord: "",
-  website: "",
-  kick: "",
-  threads: "",
-  patreon: "",
-};
-
-function asHttpUrl(value: string) {
-  try {
-    const parsed = new URL(value);
-    if (parsed.protocol === "http:" || parsed.protocol === "https:") return parsed.toString();
-    return null;
-  } catch {
-    return null;
-  }
-}
-
-function normalizeHandle(value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return "";
-  return trimmed.replace(/^@+/, "");
-}
-
-function normalizeFollowUrl(platform: FollowPlatform, value: string) {
-  const trimmed = value.trim();
-  if (!trimmed) return { value: "", error: null };
-  const hasProtocol = /^https?:\/\//i.test(trimmed);
-
-  if (platform === "website") {
-    if (!hasProtocol) return { value: "", error: "Website must start with http:// or https://." };
-    const valid = asHttpUrl(trimmed);
-    return valid ? { value: valid, error: null } : { value: "", error: "Enter a valid website URL." };
-  }
-
-  if (hasProtocol) {
-    const valid = asHttpUrl(trimmed);
-    return valid ? { value: valid, error: null } : { value: "", error: `Enter a valid ${PLATFORM_LABELS[platform]} URL.` };
-  }
-
-  const handle = normalizeHandle(trimmed);
-  if (!handle) return { value: "", error: null };
-
-  const normalized: Record<Exclude<FollowPlatform, "website">, string> = {
-    youtube: handle.startsWith("channel/") || handle.startsWith("c/") ? `https://youtube.com/${handle}` : `https://youtube.com/@${handle}`,
-    tiktok: `https://tiktok.com/@${handle}`,
-    twitch: `https://twitch.tv/${handle}`,
-    instagram: `https://instagram.com/${handle}`,
-    facebook: `https://facebook.com/${handle}`,
-    x: `https://x.com/${handle}`,
-    discord: `https://discord.gg/${handle}`,
-    kick: `https://kick.com/${handle}`,
-    threads: `https://threads.net/@${handle}`,
-    patreon: `https://patreon.com/${handle}`,
-  };
-  return { value: normalized[platform as Exclude<FollowPlatform, "website">], error: null };
-}
-
-const STORAGE_KEY = "witness.creator.profile.draft";
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -130,6 +42,7 @@ export default function ProfilePage() {
   const [followLinks, setFollowLinks] = useState<FollowLinks>(EMPTY_FOLLOW_LINKS);
   const [followErrors, setFollowErrors] = useState<Partial<Record<FollowPlatform, string>>>({});
   const [saved, setSaved] = useState(false);
+  const [screenName, setScreenName] = useState("");
 
   useEffect(() => {
     let cancelled = false;
@@ -155,25 +68,29 @@ export default function ProfilePage() {
   }, [router]);
 
   useEffect(() => {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return;
-    try {
-      const parsed = JSON.parse(raw) as {
-        displayName: string;
-        tagline: string;
-        bio: string;
-        mission: string;
-        followLinks: FollowLinks;
-      };
-      setDisplayName(parsed.displayName ?? "FrankSavage");
-      setTagline(parsed.tagline ?? "");
-      setBio(parsed.bio ?? "");
-      setMission(parsed.mission ?? "");
-      setFollowLinks(parsed.followLinks ? { ...EMPTY_FOLLOW_LINKS, ...parsed.followLinks } : EMPTY_FOLLOW_LINKS);
-    } catch {
-      // Keep defaults if local draft is malformed.
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/profile/me", { cache: "no-store" });
+        const result = (await response.json().catch(() => ({}))) as {
+          ok?: boolean;
+          profile?: CreatorProfile;
+        };
+        if (cancelled || !response.ok || !result.ok || !result.profile) return;
+        setScreenName(result.profile.screen_name ?? "");
+        setDisplayName(result.profile.display_name ?? result.profile.screen_name ?? "");
+        setTagline(result.profile.tagline ?? "");
+        setBio(result.profile.bio ?? "");
+        setMission(result.profile.mission ?? "");
+        const normalized = normalizeFollowLinks(result.profile.follow_links ?? {});
+        setFollowLinks(normalized.links);
+      } catch {
+        // keep defaults
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (canAccess !== true) {
@@ -198,16 +115,6 @@ export default function ProfilePage() {
   };
 
   const saveDraft = () => {
-    localStorage.setItem(
-      STORAGE_KEY,
-      JSON.stringify({
-        displayName,
-        tagline,
-        bio,
-        mission,
-        followLinks,
-      }),
-    );
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   };
@@ -220,17 +127,25 @@ export default function ProfilePage() {
     .filter((entry) => entry.value);
 
   const saveWithValidation = () => {
-    const nextErrors: Partial<Record<FollowPlatform, string>> = {};
-    const nextLinks: FollowLinks = { ...followLinks };
-    for (const platform of Object.keys(PLATFORM_LABELS) as FollowPlatform[]) {
-      const normalized = normalizeFollowUrl(platform, followLinks[platform]);
-      if (normalized.error) nextErrors[platform] = normalized.error;
-      nextLinks[platform] = normalized.value;
-    }
-    setFollowErrors(nextErrors);
-    setFollowLinks(nextLinks);
-    if (Object.keys(nextErrors).length) return;
-    saveDraft();
+    const normalized = normalizeFollowLinks(followLinks);
+    setFollowErrors(normalized.errors);
+    setFollowLinks(normalized.links);
+    if (Object.keys(normalized.errors).length) return;
+    void (async () => {
+      const response = await fetch("/api/profile/me", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          display_name: displayName,
+          tagline,
+          bio,
+          mission,
+          follow_links: normalized.links,
+        }),
+      });
+      if (!response.ok) return;
+      saveDraft();
+    })();
   };
 
   return (
@@ -247,6 +162,7 @@ export default function ProfilePage() {
           <div className="mt-6 rounded-xl border border-zinc-700 bg-zinc-950/80 p-4">
             <p className="text-xs uppercase tracking-wide text-zinc-400">Live preview</p>
             <p className="mt-1 text-xl font-bold text-zinc-100">{displayName || "Your creator name"}</p>
+            {screenName ? <p className="mt-1 text-xs text-zinc-400">@{screenName}</p> : null}
             <p className="mt-1 text-sm text-emerald-300">{tagline || "Your tagline appears here"}</p>
             {normalizedFollowEntries.length > 0 && (
               <div className="mt-4">
@@ -435,7 +351,7 @@ export default function ProfilePage() {
         <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-6">
           <p className="text-sm font-semibold text-emerald-300">Save profile draft</p>
           <p className="mt-2 text-sm text-zinc-100">
-            Save your current profile details in this browser while backend storage wiring is completed.
+            Save your creator profile so customers can view it at your public creator URL.
           </p>
           <div className="mt-4 flex flex-wrap gap-3">
             <button
@@ -456,6 +372,14 @@ export default function ProfilePage() {
             >
               Back to dashboard
             </Link>
+            {screenName ? (
+              <Link
+                href={`/creators/${screenName}`}
+                className="inline-flex rounded-lg border border-zinc-700 bg-zinc-900/80 px-3 py-1.5 text-xs font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+              >
+                View public profile
+              </Link>
+            ) : null}
           </div>
           {saved && <p className="mt-3 text-xs font-semibold text-emerald-300">Draft saved.</p>}
         </section>
