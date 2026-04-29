@@ -49,13 +49,25 @@ export async function POST(request: Request) {
 
   const body = (await request.json().catch(() => null)) as CheckoutPayload | null;
   const items = body?.items ?? [];
+  const customer = body?.customer;
   if (!items.length) {
     return NextResponse.json({ ok: false, error: "Cart is empty." }, { status: 400 });
+  }
+  if (!customer?.name || !customer.email || !customer.phone) {
+    return NextResponse.json({ ok: false, error: "Customer information is required." }, { status: 400 });
   }
 
   const stripe = new Stripe(stripeSecretKey, { apiVersion: "2026-04-22.dahlia" });
   const shipping = body?.shippingAddress;
-  if (!shipping?.recipient_name || !shipping.address_line1 || !shipping.city || !shipping.state || !shipping.postal_code || !shipping.country) {
+  if (
+    !shipping?.recipient_name ||
+    !shipping.address_line1 ||
+    !shipping.city ||
+    !shipping.state ||
+    !shipping.postal_code ||
+    !shipping.country ||
+    !shipping.phone
+  ) {
     return NextResponse.json({ ok: false, error: "Shipping address is required." }, { status: 400 });
   }
 
@@ -63,16 +75,13 @@ export async function POST(request: Request) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-  if (!user) return NextResponse.json({ ok: false, error: "Authentication required." }, { status: 401 });
 
-  const customerNote = body?.customer
-    ? `Name: ${body.customer.name ?? ""}\nEmail: ${body.customer.email ?? ""}\nPhone: ${body.customer.phone ?? ""}\nShip to: ${formatShippingSummary(shipping)}`
-    : undefined;
+  const customerNote = `Name: ${customer.name}\nEmail: ${customer.email}\nPhone: ${customer.phone}\nShip to: ${formatShippingSummary(shipping)}`;
 
   try {
     const session = await stripe.checkout.sessions.create({
       mode: "payment",
-      success_url: `${siteUrl}/checkout?status=paid`,
+      success_url: `${siteUrl}/checkout?status=paid&order={CHECKOUT_SESSION_ID}`,
       cancel_url: `${siteUrl}/checkout?status=cancelled`,
       line_items: items.map((item) => ({
         quantity: Math.max(1, item.quantity),
@@ -84,10 +93,10 @@ export async function POST(request: Request) {
           unit_amount: Math.round(item.price * 100),
         },
       })),
-      customer_email: body?.customer?.email,
+      customer_email: customer.email,
       metadata: {
         ...(customerNote ? { customer_note: customerNote } : {}),
-        user_id: user.id,
+        user_id: user?.id ?? "guest",
         shipping_recipient_name: shipping.recipient_name,
         shipping_address_line1: shipping.address_line1,
         shipping_address_line2: shipping.address_line2 ?? "",
@@ -99,22 +108,25 @@ export async function POST(request: Request) {
       },
     });
 
-    await supabase.from("checkout_sessions").insert({
-      user_id: user.id,
-      stripe_session_id: session.id,
-      status: "created",
-      payment_status: "pending",
-      item_count: items.reduce((sum, item) => sum + Math.max(1, item.quantity), 0),
-      amount_total: items.reduce((sum, item) => sum + Math.round(item.price * 100) * Math.max(1, item.quantity), 0) / 100,
-      shipping_recipient_name: shipping.recipient_name,
-      shipping_address_line1: shipping.address_line1,
-      shipping_address_line2: shipping.address_line2 ?? null,
-      shipping_city: shipping.city,
-      shipping_state: shipping.state,
-      shipping_postal_code: shipping.postal_code,
-      shipping_country: shipping.country,
-      shipping_phone: shipping.phone ?? null,
-    });
+    if (user?.id) {
+      await supabase.from("checkout_sessions").insert({
+        user_id: user.id,
+        stripe_session_id: session.id,
+        status: "created",
+        payment_status: "pending",
+        item_count: items.reduce((sum, item) => sum + Math.max(1, item.quantity), 0),
+        amount_total:
+          items.reduce((sum, item) => sum + Math.round(item.price * 100) * Math.max(1, item.quantity), 0) / 100,
+        shipping_recipient_name: shipping.recipient_name,
+        shipping_address_line1: shipping.address_line1,
+        shipping_address_line2: shipping.address_line2 ?? null,
+        shipping_city: shipping.city,
+        shipping_state: shipping.state,
+        shipping_postal_code: shipping.postal_code,
+        shipping_country: shipping.country,
+        shipping_phone: shipping.phone ?? null,
+      });
+    }
 
     return NextResponse.json({ ok: true, url: session.url });
   } catch (error) {

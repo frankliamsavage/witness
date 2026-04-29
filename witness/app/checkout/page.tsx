@@ -1,24 +1,12 @@
 import type { Metadata } from "next";
 import { Suspense } from "react";
-import { redirect } from "next/navigation";
 import { SupabaseMissingConfigNotice } from "@/components/SupabaseMissingConfigNotice";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
-import { createClient } from "@/lib/supabase/server";
 import { CheckoutClient } from "./CheckoutClient";
 
 export const metadata: Metadata = {
   title: "Checkout",
   description: "Review your cart and complete checkout on Witness.",
-};
-
-type UserMeta = {
-  screen_name?: string;
-  full_name?: string;
-  phone?: string;
-  shipping_address?: string;
-  shipping_city?: string;
-  shipping_state?: string;
-  shipping_zip?: string;
 };
 
 export default async function CheckoutPage() {
@@ -34,32 +22,6 @@ export default async function CheckoutPage() {
     );
   }
 
-  const supabase = await createClient();
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
-  if (!user) {
-    redirect("/login?next=/checkout");
-  }
-
-  const meta = (user.user_metadata ?? {}) as UserMeta;
-  const { data: addresses } = await supabase
-    .from("user_addresses")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("is_default", { ascending: false })
-    .order("created_at", { ascending: true });
-  const hasSetup = Boolean(meta.full_name?.trim()) && Boolean((addresses?.length ?? 0) > 0);
-  if (!hasSetup) {
-    redirect("/account/setup?next=/checkout");
-  }
-  const initialCustomer = {
-    name: meta.full_name ?? meta.screen_name ?? "",
-    email: user.email ?? "",
-    phone: meta.phone ?? "",
-  };
-
   return (
     <Suspense
       fallback={
@@ -72,7 +34,7 @@ export default async function CheckoutPage() {
         </div>
       }
     >
-      <CheckoutClient initialCustomer={initialCustomer} initialAddresses={addresses ?? []} />
+      <CheckoutClient />
     </Suspense>
   );
 }
