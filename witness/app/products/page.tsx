@@ -147,6 +147,7 @@ export default function ProductsPage() {
           backgroundUrl: "",
           followLinks: {},
           createdAt: null,
+          isNew: false,
         }));
 
     return base.map((creator) => {
