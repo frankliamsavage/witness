@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useEffect } from "react";
+import type { SettingKey } from "@/lib/site-settings";
 
 type Category = "T-Shirts" | "3D Prints";
 type AgreementType = "Royalty" | "One-Time";
@@ -22,6 +24,34 @@ export default function SubmitDesignPage() {
   const [oneTimeOfferPrice, setOneTimeOfferPrice] = useState("");
   const [imageName, setImageName] = useState("");
   const [submitted, setSubmitted] = useState(false);
+  const [submissionsEnabled, setSubmissionsEnabled] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/settings/public", { cache: "no-store" });
+        const result = (await response.json().catch(() => ({}))) as {
+          ok?: boolean;
+          settings?: Partial<Record<SettingKey, boolean>>;
+        };
+        if (!cancelled && response.ok && result.ok) {
+          const settings = result.settings ?? {};
+          setSubmissionsEnabled(settings.new_design_submissions_enabled !== false);
+          setMaintenanceMode(settings.site_maintenance_mode === true);
+        }
+      } catch {
+        if (!cancelled) {
+          setSubmissionsEnabled(true);
+          setMaintenanceMode(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const onFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -30,6 +60,7 @@ export default function SubmitDesignPage() {
 
   const onSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!submissionsEnabled || maintenanceMode) return;
     setSubmitted(true);
   };
 
@@ -47,6 +78,11 @@ export default function SubmitDesignPage() {
         </section>
 
         <form onSubmit={onSubmit} className="rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6 sm:p-8">
+          {(!submissionsEnabled || maintenanceMode) && (
+            <p className="mb-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+              Submissions are temporarily unavailable. Please check back soon.
+            </p>
+          )}
           <div className="grid gap-5">
             <label className="grid gap-2">
               <span className="text-sm font-semibold text-emerald-300">Design title</span>
@@ -54,6 +90,7 @@ export default function SubmitDesignPage() {
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
                 required
+                disabled={!submissionsEnabled || maintenanceMode}
                 className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                 placeholder="Ex: Transparent City Grid"
               />
@@ -65,6 +102,7 @@ export default function SubmitDesignPage() {
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 required
+                disabled={!submissionsEnabled || maintenanceMode}
                 rows={4}
                 className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                 placeholder="Describe your concept, style, and why it fits Witness."
@@ -77,6 +115,7 @@ export default function SubmitDesignPage() {
                 <select
                   value={category}
                   onChange={(e) => setCategory(e.target.value as Category)}
+                  disabled={!submissionsEnabled || maintenanceMode}
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                 >
                   <option value="T-Shirts">T-Shirts</option>
@@ -89,6 +128,7 @@ export default function SubmitDesignPage() {
                 <select
                   value={agreementType}
                   onChange={(e) => setAgreementType(e.target.value as AgreementType)}
+                  disabled={!submissionsEnabled || maintenanceMode}
                   className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                 >
                   <option value="Royalty">Royalty</option>
@@ -131,6 +171,7 @@ export default function SubmitDesignPage() {
                     step="0.01"
                     value={oneTimeOfferPrice}
                     onChange={(e) => setOneTimeOfferPrice(e.target.value)}
+                    disabled={!submissionsEnabled || maintenanceMode}
                     placeholder="Ex: 500.00"
                     className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 outline-none transition-colors focus:border-emerald-500/50"
                   />
@@ -153,6 +194,7 @@ export default function SubmitDesignPage() {
                 type="file"
                 accept="image/*"
                 onChange={onFileChange}
+                disabled={!submissionsEnabled || maintenanceMode}
                 className="rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200 file:mr-3 file:rounded-md file:border-0 file:bg-emerald-500/20 file:px-3 file:py-1 file:text-xs file:font-semibold file:text-emerald-300"
               />
               {imageName && <p className="text-xs text-zinc-400">Selected file: {imageName}</p>}
@@ -160,7 +202,8 @@ export default function SubmitDesignPage() {
 
             <button
               type="submit"
-              className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 sm:w-auto"
+              disabled={!submissionsEnabled || maintenanceMode}
+              className="mt-2 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
             >
               Submit Design
             </button>

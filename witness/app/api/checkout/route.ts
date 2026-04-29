@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import Stripe from "stripe";
-import { getSiteSetting } from "@/lib/site-settings";
+import { getAllSiteSettings } from "@/lib/site-settings";
 
 type CheckoutItem = {
   name: string;
@@ -24,9 +24,12 @@ export async function POST(request: Request) {
   const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
   const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000";
   const liveEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT !== "false";
-  const stripePaymentsEnabled = await getSiteSetting("stripe_payments_enabled");
+  const settings = await getAllSiteSettings();
+  const stripePaymentsEnabled = settings.stripe_payments_enabled;
+  const ordersEnabled = settings.orders_enabled;
+  const maintenanceMode = settings.site_maintenance_mode;
 
-  if (!liveEnabled || !stripeSecretKey || !stripePaymentsEnabled) {
+  if (!liveEnabled || !stripeSecretKey || !stripePaymentsEnabled || !ordersEnabled || maintenanceMode) {
     return NextResponse.json(
       { ok: false, error: "Payments are temporarily unavailable. Please check back soon." },
       { status: 503 },

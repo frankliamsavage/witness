@@ -1,12 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getAllSiteSettings } from "@/lib/site-settings";
+import { isPayoutLegalReviewApproved } from "@/lib/runtime-flags";
 
 export const metadata: Metadata = {
   title: "Contributor Agreement",
   description: "Exclusive license contributor agreement for Witness creators.",
 };
 
-export default function AgreementsPage() {
+export default async function AgreementsPage() {
+  const settings = await getAllSiteSettings();
+  const payoutsEnabled = isPayoutLegalReviewApproved() && settings.creator_payouts_enabled;
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-6 py-16 sm:px-10 lg:px-16">
@@ -23,6 +27,11 @@ export default function AgreementsPage() {
         </section>
 
         <section className="space-y-6 rounded-2xl border border-zinc-800 bg-zinc-900/70 p-6">
+          {!payoutsEnabled && (
+            <p className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-sm text-amber-200">
+              Creator payouts are currently disabled by platform settings.
+            </p>
+          )}
           <article>
             <h2 className="text-lg font-semibold text-emerald-300">1. Parties and Scope</h2>
             <p className="mt-2 text-sm text-zinc-300">

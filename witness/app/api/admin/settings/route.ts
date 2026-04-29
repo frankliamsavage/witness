@@ -52,8 +52,17 @@ export async function PATCH(request: Request) {
     return NextResponse.json({ ok: false, error: "Invalid setting payload." }, { status: 400 });
   }
 
-  await updateSiteSetting(key, value, user.id);
-  console.info("[admin-settings] updated", { key, value, adminUserId: user.id, at: new Date().toISOString() });
-
-  return NextResponse.json({ ok: true });
+  try {
+    await updateSiteSetting(key, value, user.id);
+    console.info("[admin-settings] updated", { key, value, adminUserId: user.id, at: new Date().toISOString() });
+    return NextResponse.json({ ok: true });
+  } catch (error) {
+    return NextResponse.json(
+      {
+        ok: false,
+        error: error instanceof Error ? error.message : "Failed to save setting.",
+      },
+      { status: 500 },
+    );
+  }
 }

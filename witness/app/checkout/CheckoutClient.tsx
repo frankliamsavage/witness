@@ -4,6 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartContext";
+import type { SettingKey } from "@/lib/site-settings";
 
 type InitialCustomer = {
   name: string;
@@ -20,6 +21,8 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const liveCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT !== "false";
   const [stripePaymentsEnabled, setStripePaymentsEnabled] = useState(true);
+  const [ordersEnabled, setOrdersEnabled] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -28,10 +31,13 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
         const response = await fetch("/api/settings/public", { cache: "no-store" });
         const result = (await response.json().catch(() => ({}))) as {
           ok?: boolean;
-          stripe_payments_enabled?: boolean;
+          settings?: Partial<Record<SettingKey, boolean>>;
         };
         if (!cancelled && response.ok && result.ok) {
-          setStripePaymentsEnabled(result.stripe_payments_enabled !== false);
+          const settings = result.settings ?? {};
+          setStripePaymentsEnabled(settings.stripe_payments_enabled !== false);
+          setOrdersEnabled(settings.orders_enabled !== false);
+          setMaintenanceMode(settings.site_maintenance_mode === true);
         }
       } catch {
         if (!cancelled) setStripePaymentsEnabled(true);
@@ -53,7 +59,7 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
           <p className="mt-3 text-sm text-zinc-300">
             Review your item, add your shipping details, and place the order.
           </p>
-          {(!liveCheckoutEnabled || !stripePaymentsEnabled) && (
+          {(!liveCheckoutEnabled || !stripePaymentsEnabled || !ordersEnabled || maintenanceMode) && (
             <p className="mt-4 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-200">
               Payments are temporarily unavailable. Please check back soon.
             </p>
@@ -89,7 +95,7 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
                 zip: String(data.get("zip") ?? ""),
               };
 
-              if (!liveCheckoutEnabled || !stripePaymentsEnabled) {
+              if (!liveCheckoutEnabled || !stripePaymentsEnabled || !ordersEnabled || maintenanceMode) {
                 setErrorMessage("Payments are temporarily unavailable. Please check back soon.");
                 return;
               }
@@ -207,10 +213,17 @@ export function CheckoutClient({ initialCustomer }: { initialCustomer: InitialCu
 
             <button
               type="submit"
-              disabled={items.length === 0 || processingPayment || !liveCheckoutEnabled || !stripePaymentsEnabled}
+              disabled={
+                items.length === 0 ||
+                processingPayment ||
+                !liveCheckoutEnabled ||
+                !stripePaymentsEnabled ||
+                !ordersEnabled ||
+                maintenanceMode
+              }
               className="mobile-touch-target mt-5 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 disabled:cursor-not-allowed disabled:opacity-50"
             >
-              {liveCheckoutEnabled && stripePaymentsEnabled
+              {liveCheckoutEnabled && stripePaymentsEnabled && ordersEnabled && !maintenanceMode
                 ? processingPayment
                   ? "Starting Payment..."
                   : "Proceed to Secure Payment"

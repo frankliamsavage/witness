@@ -3,6 +3,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { SupabaseMissingConfigNotice } from "@/components/SupabaseMissingConfigNotice";
 import { isPayoutLegalReviewApproved } from "@/lib/runtime-flags";
+import { getAllSiteSettings } from "@/lib/site-settings";
 import { createClient } from "@/lib/supabase/server";
 import { getSupabasePublicConfig } from "@/lib/supabase/env";
 
@@ -76,7 +77,9 @@ function getProgressToNextRevenueTier(totalRevenue: number) {
 }
 
 export default async function DashboardPage() {
-  const payoutsApproved = isPayoutLegalReviewApproved();
+  const featureSettings = await getAllSiteSettings();
+  const payoutsApproved = isPayoutLegalReviewApproved() && featureSettings.creator_payouts_enabled;
+  const submissionsEnabled = featureSettings.new_design_submissions_enabled && !featureSettings.site_maintenance_mode;
   if (!getSupabasePublicConfig()) {
     return (
       <div className="min-h-screen bg-zinc-950 text-zinc-100">
@@ -121,12 +124,18 @@ export default async function DashboardPage() {
           </p>
           {meta?.role === "Creator" && (
             <div className="mt-4 flex flex-wrap gap-3">
-              <Link
-                href="/submit-design"
-                className="inline-flex rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
-              >
-                Submit a design
-              </Link>
+              {submissionsEnabled ? (
+                <Link
+                  href="/submit-design"
+                  className="inline-flex rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                >
+                  Submit a design
+                </Link>
+              ) : (
+                <span className="inline-flex rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 text-sm font-semibold text-zinc-500">
+                  Submissions unavailable
+                </span>
+              )}
               <Link
                 href="/submitted-designs"
                 className="inline-flex rounded-xl border border-zinc-700 bg-zinc-900/80 px-4 py-2 text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
@@ -147,7 +156,7 @@ export default async function DashboardPage() {
           <section className="rounded-2xl border border-amber-500/30 bg-amber-500/10 p-4">
             <p className="text-sm font-semibold text-amber-200">Creator payouts are currently disabled.</p>
             <p className="mt-1 text-xs text-amber-100">
-              Legal review is in progress. Submission and agreement tools are active, but payout execution is locked.
+              Payout execution is locked until legal review and payout settings are enabled.
             </p>
           </section>
         )}

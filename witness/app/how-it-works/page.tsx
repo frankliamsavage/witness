@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { getAllSiteSettings } from "@/lib/site-settings";
 
 const REVENUE_ROYALTY_TIERS = [
   { range: "$0 - $1,000", rate: "10%" },
@@ -14,7 +15,9 @@ export const metadata: Metadata = {
   description: "See exactly how Witness product pricing and creator royalty tiers are calculated.",
 };
 
-export default function HowItWorksPage() {
+export default async function HowItWorksPage() {
+  const settings = await getAllSiteSettings();
+  const submissionsEnabled = settings.new_design_submissions_enabled && !settings.site_maintenance_mode;
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <main className="mx-auto flex w-full max-w-6xl flex-col gap-8 px-4 py-10 sm:gap-12 sm:px-8 sm:py-16 lg:px-16">
@@ -159,12 +162,18 @@ export default function HowItWorksPage() {
               </p>
             </div>
           </div>
-          <Link
-            href="/submit-design"
-            className="mobile-touch-target mt-5 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 sm:w-auto"
-          >
-            Submit Your Work
-          </Link>
+          {submissionsEnabled ? (
+            <Link
+              href="/submit-design"
+              className="mobile-touch-target mt-5 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 sm:w-auto"
+            >
+              Submit Your Work
+            </Link>
+          ) : (
+            <span className="mobile-touch-target mt-5 inline-flex w-full items-center justify-center rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2.5 text-sm font-semibold text-zinc-500 sm:w-auto">
+              Submissions Unavailable
+            </span>
+          )}
         </section>
 
         <section className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 sm:p-6">

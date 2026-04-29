@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useCart } from "@/components/cart/CartContext";
+import type { SettingKey } from "@/lib/site-settings";
 import { productCatalog } from "@/lib/product-catalog";
 
 const filters = ["All", "Official", "Creator Profiles", "Rights Acquired"] as const;
@@ -33,6 +34,37 @@ export default function ProductsPage() {
   const [selectedColors, setSelectedColors] = useState<Record<number, ProductColor>>({});
   const [lastAddedDesignId, setLastAddedDesignId] = useState<number | null>(null);
   const { items, addToCart, subtotal, itemCount } = useCart();
+  const [ordersEnabled, setOrdersEnabled] = useState(true);
+  const [submissionsEnabled, setSubmissionsEnabled] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const response = await fetch("/api/settings/public", { cache: "no-store" });
+        const result = (await response.json().catch(() => ({}))) as {
+          ok?: boolean;
+          settings?: Partial<Record<SettingKey, boolean>>;
+        };
+        if (!cancelled && response.ok && result.ok) {
+          const settings = result.settings ?? {};
+          setOrdersEnabled(settings.orders_enabled !== false);
+          setSubmissionsEnabled(settings.new_design_submissions_enabled !== false);
+          setMaintenanceMode(settings.site_maintenance_mode === true);
+        }
+      } catch {
+        if (!cancelled) {
+          setOrdersEnabled(true);
+          setSubmissionsEnabled(true);
+          setMaintenanceMode(false);
+        }
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const creatorOptions = useMemo(() => {
     const creators = Array.from(
@@ -72,6 +104,7 @@ export default function ProductsPage() {
     fromPrice + SIZE_ADJUSTMENTS[size] + COLOR_ADJUSTMENTS[color];
 
   const handleAddToCart = (designId: number) => {
+    if (!ordersEnabled || maintenanceMode) return;
     const design = filteredDesigns.find((item) => item.id === designId);
     if (!design) return;
     const size = getSelectedSize(designId);
@@ -92,6 +125,13 @@ export default function ProductsPage() {
   return (
     <div className="min-h-screen bg-zinc-950 text-zinc-100">
       <main className="mx-auto flex w-full max-w-7xl flex-col gap-8 px-4 py-10 sm:gap-10 sm:px-8 sm:py-16 lg:px-16">
+        {maintenanceMode && (
+          <section className="rounded-xl border border-amber-500/30 bg-amber-500/10 p-4">
+            <p className="text-sm font-semibold text-amber-200">
+              Site maintenance mode is active. Purchases and submissions are temporarily unavailable.
+            </p>
+          </section>
+        )}
         <section className="rounded-3xl border border-zinc-800 bg-gradient-to-br from-zinc-900 via-zinc-900 to-zinc-950 p-6 shadow-2xl shadow-emerald-500/10 sm:p-12">
           <p className="mb-4 inline-flex rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-emerald-300">
             Products
@@ -266,13 +306,18 @@ export default function ProductsPage() {
                         <button
                           type="button"
                           onClick={() => handleAddToCart(design.id)}
+                          disabled={!ordersEnabled || maintenanceMode}
                           className={`mobile-touch-target rounded-xl border px-3 py-2 text-sm font-semibold transition-all duration-200 ${
                             lastAddedDesignId === design.id
                               ? "scale-[1.02] border-emerald-500/40 bg-emerald-500/20 text-emerald-300"
                               : "border-zinc-700 bg-zinc-900/70 text-zinc-200 hover:border-emerald-500/40 hover:text-emerald-300"
-                          }`}
+                          } disabled:cursor-not-allowed disabled:opacity-50`}
                         >
-                          {lastAddedDesignId === design.id ? "Added!" : "Add to Cart"}
+                          {!ordersEnabled || maintenanceMode
+                            ? "Unavailable"
+                            : lastAddedDesignId === design.id
+                              ? "Added!"
+                              : "Add to Cart"}
                         </button>
                         <Link
                           href="/cart"
@@ -311,16 +356,26 @@ export default function ProductsPage() {
                 )}
                 <Link
                   href="/submit-design"
-                  className="mobile-touch-target mt-4 inline-flex w-full rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2 text-center text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25 sm:w-auto"
+                  aria-disabled={!submissionsEnabled || maintenanceMode}
+                  className={`mobile-touch-target mt-4 inline-flex w-full rounded-xl border px-4 py-2 text-center text-sm font-semibold transition-colors sm:w-auto ${
+                    submissionsEnabled && !maintenanceMode
+                      ? "border-emerald-500/40 bg-emerald-500/15 text-emerald-300 transition-colors hover:bg-emerald-500/25"
+                      : "pointer-events-none border-zinc-700 bg-zinc-900/70 text-zinc-500"
+                  }`}
                 >
-                  Submit Design
+                  {submissionsEnabled && !maintenanceMode ? "Submit Design" : "Submissions Unavailable"}
                 </Link>
                 {(selectedFilter === "Creator Profiles" || selectedFilter === "Rights Acquired") && (
                   <Link
                     href="/submit-design"
-                    className="mobile-touch-target mt-3 inline-flex w-full rounded-xl border border-zinc-700 bg-zinc-900/70 px-4 py-2 text-center text-sm font-semibold text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300 sm:ml-3 sm:mt-0 sm:w-auto"
+                    aria-disabled={!submissionsEnabled || maintenanceMode}
+                    className={`mobile-touch-target mt-3 inline-flex w-full rounded-xl border px-4 py-2 text-center text-sm font-semibold sm:ml-3 sm:mt-0 sm:w-auto ${
+                      submissionsEnabled && !maintenanceMode
+                        ? "border-zinc-700 bg-zinc-900/70 text-zinc-200 transition-colors hover:border-emerald-500/40 hover:text-emerald-300"
+                        : "pointer-events-none border-zinc-700 bg-zinc-900/70 text-zinc-500"
+                    }`}
                   >
-                    Be first to submit
+                    {submissionsEnabled && !maintenanceMode ? "Be first to submit" : "Submissions Unavailable"}
                   </Link>
                 )}
               </div>

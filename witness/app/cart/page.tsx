@@ -4,11 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { useCart } from "@/components/cart/CartContext";
+import type { SettingKey } from "@/lib/site-settings";
 
 export default function CartPage() {
   const { items, subtotal, updateQuantity, removeFromCart, clearCart, itemCount } = useCart();
   const liveCheckoutEnabled = process.env.NEXT_PUBLIC_ENABLE_LIVE_CHECKOUT !== "false";
   const [stripePaymentsEnabled, setStripePaymentsEnabled] = useState(true);
+  const [ordersEnabled, setOrdersEnabled] = useState(true);
+  const [maintenanceMode, setMaintenanceMode] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -17,10 +20,13 @@ export default function CartPage() {
         const response = await fetch("/api/settings/public", { cache: "no-store" });
         const result = (await response.json().catch(() => ({}))) as {
           ok?: boolean;
-          stripe_payments_enabled?: boolean;
+          settings?: Partial<Record<SettingKey, boolean>>;
         };
         if (!cancelled && response.ok && result.ok) {
-          setStripePaymentsEnabled(result.stripe_payments_enabled !== false);
+          const settings = result.settings ?? {};
+          setStripePaymentsEnabled(settings.stripe_payments_enabled !== false);
+          setOrdersEnabled(settings.orders_enabled !== false);
+          setMaintenanceMode(settings.site_maintenance_mode === true);
         }
       } catch {
         if (!cancelled) setStripePaymentsEnabled(true);
@@ -64,12 +70,12 @@ export default function CartPage() {
                 Subtotal: <span className="font-semibold text-zinc-100">${subtotal.toFixed(2)}</span>
               </p>
               <p className="mt-1 text-xs text-zinc-400">Shipping and tax are calculated at final checkout.</p>
-              {(!liveCheckoutEnabled || !stripePaymentsEnabled) && (
+              {(!liveCheckoutEnabled || !stripePaymentsEnabled || !ordersEnabled || maintenanceMode) && (
                 <p className="mt-2 rounded-lg border border-amber-500/30 bg-amber-500/10 px-2 py-1 text-[11px] text-amber-200">
                   Payments are temporarily unavailable. Please check back soon.
                 </p>
               )}
-              {liveCheckoutEnabled && stripePaymentsEnabled ? (
+              {liveCheckoutEnabled && stripePaymentsEnabled && ordersEnabled && !maintenanceMode ? (
                 <Link
                   href="/checkout"
                   className="mobile-touch-target mt-4 inline-flex w-full items-center justify-center rounded-xl border border-emerald-500/40 bg-emerald-500/15 px-4 py-2.5 text-sm font-semibold text-emerald-300 transition-colors hover:bg-emerald-500/25"
